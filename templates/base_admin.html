@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PrimeFix Admin{% endblock %}</title>
+
+  <!-- Bootstrap 5 CSS + ícones -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- CSS global do projeto (style.css) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+   <style>
+    /* ============================================================
+       VARIÁVEIS DE COR — paleta PrimeFix (SaaS profissional)
+       ============================================================ */
+    :root {
+      --azul-escuro:#1E3A5F;
+      --azul-destaque:#2563EB;
+      --azul-claro:#EAF3FF;      /* NOVO: azul-céu de apoio (fundos suaves) */
+      --verde:#22C55E;
+      --amarelo:#FACC15;
+      --cinza-claro:#F7F9FC;     /* levemente mais claro que antes */
+      --cinza-borda:#E5E9F0;     /* NOVO: borda padrão consistente */
+      --sombra-sm:0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+      --sombra-md:0 4px 14px rgba(15,23,42,.08);
+      --sombra-lg:0 10px 30px rgba(15,23,42,.12);
+      --raio:14px;               /* NOVO: raio de borda padrão do design system */
+      --sidebar-w:260px;
+    }
+
+    body { background:var(--cinza-claro); overflow-x:hidden; }
+
+    /* ============================================================
+       BOTÕES DO BOOTSTRAP — recoloridos pra bater com a identidade
+       (afeta automaticamente todas as telas que já usam btn-primary,
+       btn-success, btn-danger etc., sem precisar editar cada template)
+       ============================================================ */
+    .btn { border-radius:9px; font-weight:600; font-size:.88rem; }
+    .btn-primary {
+      background:var(--azul-destaque); border-color:var(--azul-destaque);
+      box-shadow:var(--sombra-sm);
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      background:#1d4ed8; border-color:#1d4ed8;
+    }
+    .btn-success { background:#16a34a; border-color:#16a34a; }
+    .btn-success:hover { background:#15803d; border-color:#15803d; }
+    .btn-danger  { background:#dc2626; border-color:#dc2626; }
+    .btn-danger:hover  { background:#b91c1c; border-color:#b91c1c; }
+    .btn-outline-secondary { border-color:var(--cinza-borda); color:#475569; }
+    .btn-warning { color:#78350f; }
+
+    /* ============================================================
+       SIDEBAR — barra lateral fixa à esquerda
+       ============================================================ */
+    #sidebar {
+      width:var(--sidebar-w);
+      min-height:100vh;
+      background:var(--azul-escuro);
+      position:fixed;
+      top:0; left:0;
+      z-index:1040;
+      transition:transform .25s ease;
+      display:flex;
+      flex-direction:column;
+      box-shadow:var(--sombra-lg);
+    }
+
+    .sidebar-brand { padding:1.5rem 1.5rem 1.1rem; border-bottom:1px solid rgba(255,255,255,.08); }
+    .sidebar-brand h4 { color:#fff; font-weight:800; font-size:1.35rem; margin:0; letter-spacing:-.01em; }
+    .sidebar-brand h4 span { color:var(--amarelo); }
+    .sidebar-brand small { color:rgba(255,255,255,.45); font-size:.72rem; display:block; margin-top:2px; }
+
+    .nav-section {
+      font-size:.66rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.1em;
+      color:rgba(255,255,255,.28);
+      padding:1.1rem 1.5rem .4rem;
+    }
+
+    /* Links de navegação — agora em formato de "pílula" arredondada */
+    #sidebar .nav-link {
+      color:rgba(255,255,255,.75);
+      padding:.62rem 1rem;
+      margin:.15rem .9rem;
+      font-size:.87rem;
+      display:flex; align-items:center; gap:.75rem;
+      border-radius:9px;
+      transition:all .15s;
+    }
+    #sidebar .nav-link i {
+      font-size:1rem; width:26px; height:26px;
+      display:flex; align-items:center; justify-content:center;
+      border-radius:7px; background:rgba(255,255,255,.06);
+      transition:all .15s;
+    }
+    #sidebar .nav-link:hover { background:rgba(255,255,255,.08); color:#fff; }
+    #sidebar .nav-link.active {
+      background:var(--azul-destaque); color:#fff; font-weight:600;
+      box-shadow:0 4px 12px rgba(37,99,235,.35);
+    }
+    #sidebar .nav-link.active i { background:rgba(255,255,255,.18); }
+
+    #sidebar .nav-link.sair { color:rgba(255,110,110,.85) !important; margin-top:.3rem; }
+    #sidebar .nav-link.sair:hover { color:#ff6464 !important; background:rgba(255,0,0,.1); }
+
+    .sidebar-footer {
+      margin-top:auto;
+      padding:1.1rem 1.5rem;
+      border-top:1px solid rgba(255,255,255,.08);
+      font-size:.73rem; color:rgba(255,255,255,.3);
+    }
+
+    /* ============================================================
+       TOPBAR — barra superior fixa, com leve efeito de vidro
+       ============================================================ */
+    #topbar {
+      margin-left:var(--sidebar-w);
+      background:rgba(255,255,255,.85);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      border-bottom:1px solid var(--cinza-borda);
+      padding:.85rem 1.8rem;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:1030;
+    }
+    .topbar-title { font-weight:700; font-size:1.05rem; color:var(--azul-escuro); letter-spacing:-.01em; }
+
+    /* ============================================================
+       CONTEÚDO PRINCIPAL
+       ============================================================ */
+    #main-content { margin-left:var(--sidebar-w); padding:2rem; min-height:100vh; }
+
+    /* Cabeçalho padrão de página — NOVO, opcional pras próximas telas */
+    .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.4rem; flex-wrap:wrap; gap:.8rem; }
+    .page-header h2 { font-size:1.35rem; font-weight:800; color:var(--azul-escuro); margin:0; letter-spacing:-.01em; }
+    .page-header p { color:#64748b; font-size:.88rem; margin:.2rem 0 0; }
+
+    /* ============================================================
+       CARDS DE ESTATÍSTICA
+       ============================================================ */
+    .stat-card {
+      border:none; border-radius:var(--raio); padding:1.3rem 1.5rem;
+      display:flex; align-items:center; gap:1rem;
+      box-shadow:var(--sombra-sm);
+      background:#fff;
+      transition:transform .2s, box-shadow .2s;
+    }
+    .stat-card:hover { transform:translateY(-3px); box-shadow:var(--sombra-md); }
+
+    .stat-icon {
+      width:52px; height:52px; border-radius:13px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.35rem; flex-shrink:0;
+    }
+    .stat-val { font-size:1.8rem; font-weight:800; line-height:1; letter-spacing:-.02em; }
+    .stat-lbl { font-size:.76rem; color:#64748b; margin-top:3px; font-weight:500; }
+
+    .icon-total    { background:#dbeafe; color:#2563eb; }
+    .icon-pendente { background:#fef9c3; color:#ca8a04; }
+    .icon-execucao { background:#ffedd5; color:#ea580c; }
+    .icon-concluida{ background:#dcfce7; color:#16a34a; }
+    .icon-receita  { background:#f3e8ff; color:#7c3aed; }
+
+    .card-receita { background:linear-gradient(135deg, var(--azul-escuro), #16304d) !important; color:#fff; }
+    .card-receita .stat-lbl { color:rgba(255,255,255,.6); }
+
+    /* ============================================================
+       SECTION CARD
+       ============================================================ */
+    .section-card {
+      background:#fff; border-radius:var(--raio);
+      box-shadow:var(--sombra-sm);
+      overflow:hidden; margin-bottom:1.5rem;
+      border:1px solid var(--cinza-borda);
+    }
+    .sc-header {
+      padding:1rem 1.4rem; border-bottom:1px solid var(--cinza-borda);
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:.5rem;
+      background:#fbfcfe;
+    }
+    .sc-header h6 { margin:0; font-weight:700; font-size:.95rem; color:var(--azul-escuro); }
+
+    /* ============================================================
+       ESTADO VAZIO — NOVO, pra usar em listas/tabelas sem resultado
+       ============================================================ */
+    .empty-state { text-align:center; padding:3rem 1.5rem; color:#94a3b8; }
+    .empty-state i { font-size:2.2rem; color:#cbd5e1; display:block; margin-bottom:.6rem; }
+    .empty-state p { margin:0; font-size:.9rem; }
+
+    /* ============================================================
+       TABELA ADMIN
+       ============================================================ */
+    .table-admin thead th {
+      background:#fbfcfe; font-size:.74rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.06em;
+      color:#64748b; border-bottom:2px solid var(--cinza-borda); white-space:nowrap;
+    }
+    .table-admin td { font-size:.86rem; vertical-align:middle; }
+    .table-admin tr:hover td { background:#fbfcfe; }
+
+    /* ============================================================
+       STATUS BADGES
+       ============================================================ */
+    .status-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:4px 11px; border-radius:20px;
+      font-size:.71rem; font-weight:700;
+      letter-spacing:.02em;
+    }
+    .status-dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
+
+    .bs-aberta    { background:#fee2e2; color:#991b1b; }
+    .bs-atribuida { background:#dbeafe; color:#1d4ed8; }
+    .bs-andamento { background:#ede9fe; color:#6d28d9; }
+    .bs-concluida { background:#dcfce7; color:#15803d; }
+    .bs-cancelada { background:#f3f4f6; color:#6b7280; }
+
+    /* ============================================================
+       BOTÕES DE AÇÃO — ícones pequenos nas linhas da tabela
+       ============================================================ */
+    .btn-acao {
+      width:32px; height:32px; border-radius:8px; border:none;
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:.85rem; cursor:pointer; transition:all .15s; text-decoration:none;
+    }
+    .btn-acao:hover { filter:brightness(.93); transform:scale(1.08); }
+    .btn-ver   { background:#dbeafe; color:#1d4ed8; }
+    .btn-editar{ background:#fef9c3; color:#92400e; }
+    .btn-atrib { background:#ede9fe; color:#6d28d9; }
+    .btn-fin   { background:#dcfce7; color:#15803d; }
+
+    /* ============================================================
+       TOPBAR — chip do usuário logado
+       ============================================================ */
+    .user-chip {
+      display:flex; align-items:center; gap:.5rem;
+      background:var(--azul-claro); border-radius:50px;
+      padding:.35rem .9rem .35rem .5rem;
+      font-size:.82rem; font-weight:600; color:var(--azul-escuro); cursor:pointer;
+      transition:background .15s;
+    }
+    .user-chip:hover { background:#dbeafe; }
+    .avatar {
+      width:29px; height:29px; border-radius:50%;
+      background:var(--azul-destaque); color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.75rem; font-weight:700;
+    }
+    .badge-role { background:var(--amarelo); color:#78350f; font-size:.62rem; padding:1px 7px; border-radius:20px; font-weight:700; }
+
+    .btn-notif { background:none; border:none; font-size:1.2rem; color:#64748b; cursor:pointer; position:relative; }
+    .notif-dot { position:absolute; top:-3px; right:-3px; width:8px; height:8px; background:#ef4444; border-radius:50%; box-shadow:0 0 0 2px #fff; }
+
+    /* ============================================================
+       FEED DE ATIVIDADES RECENTES
+       ============================================================ */
+    .atividade-item {
+      display:flex; align-items:flex-start; gap:.8rem;
+      padding:.7rem 1.3rem; border-bottom:1px solid #f3f4f6;
+    }
+    .atividade-item:last-child { border-bottom:none; }
+    .ativ-icon {
+      width:34px; height:34px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.85rem; flex-shrink:0;
+    }
+    .ativ-texto { font-size:.84rem; color:#374151; }
+    .ativ-tempo { font-size:.74rem; color:#9ca3af; }
+
+    /* ============================================================
+       RESPONSIVIDADE
+       ============================================================ */
+    #sidebar-toggle { display:none; }
+    @media(max-width:991px){
+      #sidebar { transform:translateX(-100%); }
+      #sidebar.show { transform:translateX(0); }
+      #topbar, #main-content { margin-left:0 !important; }
+      #sidebar-toggle { display:block; }
+    }
+  </style>
+</head>
+<body>
+<!-- ============================================================
+     SIDEBAR — navegação lateral fixa
+     A classe "active" é definida via Jinja comparando request.path
+     ============================================================ -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <h4>Prime<span>Fix</span></h4>
+    <small>Painel Administrativo</small>
+  </div>
+
+  <div class="nav-section">Principal</div>
+<a href="/admin/dashboard" class="nav-link {% if request.path == '/admin/dashboard' %}active{% endif %}">
+  <i class="bi bi-speedometer2"></i> Dashboard
+</a>
+
+<a href="/admin/os" class="nav-link {% if '/admin/os' in request.path %}active{% endif %}">
+  <i class="bi bi-clipboard-list"></i> Ordens de Serviço
+</a>
+
+  <div class="nav-section">Gestão</div>
+  <a href="/admin/clientes" class="nav-link {% if '/admin/clientes' in request.path %}active{% endif %}">
+    <i class="bi bi-people"></i> Clientes
+  </a>
+  <a href="/admin/tecnicos" class="nav-link {% if '/admin/tecnicos' in request.path %}active{% endif %}">
+    <i class="bi bi-wrench-adjustable"></i> Técnicos
+  </a>
+  <a href="/admin/categorias" class="nav-link {% if '/admin/categorias' in request.path %}active{% endif %}">
+    <i class="bi bi-grid"></i> Categorias
+  </a>
+
+ <!-- ============================================================
+     FINANCEIRO
+     ============================================================ -->
+<div class="nav-section">Financeiro</div>
+
+<a href="/admin/financeiro"
+   class="nav-link {% if '/admin/financeiro' in request.path %}active{% endif %}">
+  <i class="bi bi-cash-stack"></i> Financeiro
+</a>
+
+<a href="/admin/relatorios"
+   class="nav-link {% if '/admin/relatorios' in request.path %}active{% endif %}">
+  <i class="bi bi-bar-chart-fill"></i> Desempenho dos Técnicos
+</a>
+
+
+  <div class="nav-section">Sistema</div>
+  <a href="/admin/configuracoes" class="nav-link {% if '/admin/configuracoes' in request.path %}active{% endif %}">
+    <i class="bi bi-gear"></i> Configurações
+  </a>
+  <a href="/logout" class="nav-link sair">
+    <i class="bi bi-box-arrow-left"></i> Sair
+  </a>
+
+  <div class="sidebar-footer">© 2026 PrimeFix</div>
+</nav>
+
+<!-- Overlay escuro atrás da sidebar no mobile — fecha ao clicar -->
+<div id="sidebar-overlay" onclick="toggleSidebar()"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1039"></div>
+
+<!-- ============================================================
+     TOPBAR — barra superior com título da página, notificações
+     e dropdown do usuário logado
+     ============================================================ -->
+<header id="topbar">
+  <div class="d-flex align-items-center gap-3">
+    <!-- Botão hamburguer — visível só no mobile -->
+    <button id="sidebar-toggle" class="btn btn-sm btn-light" onclick="toggleSidebar()">
+      <i class="bi bi-list fs-5"></i>
+    </button>
+    <!-- Título da página — definido em cada template filho via bloco page_title -->
+    <span class="topbar-title">{% block page_title %}Dashboard{% endblock %}</span>
+  </div>
+
+  <div class="d-flex align-items-center gap-3">
+    <!-- Sininho de notificações — lista dinâmica vinda da rota -->
+    <button class="btn-notif" data-bs-toggle="dropdown">
+      <i class="bi bi-bell"></i>
+      {% if notif_count and notif_count > 0 %}<span class="notif-dot"></span>{% endif %}
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width:260px;font-size:.85rem">
+      <li><h6 class="dropdown-header">Notificações</h6></li>
+      {% if notificacoes %}
+        {% for n in notificacoes %}
+          <li><a class="dropdown-item py-2" href="#">{{ n }}</a></li>
+        {% endfor %}
+      {% else %}
+        <li><span class="dropdown-item text-muted">Nenhuma notificação</span></li>
+      {% endif %}
+    </ul>
+
+    <!-- Chip do usuário com avatar, nome e role -->
+    <div class="dropdown">
+      <div class="user-chip" data-bs-toggle="dropdown">
+        <div class="avatar">{{ session.nome[0]|upper }}</div>
+        <div>
+          <div style="line-height:1.2">{{ session.nome.split()[0] }}</div>
+          <span class="badge-role">{{ session.role|replace('_',' ')|upper }}</span>
+        </div>
+        <i class="bi bi-chevron-down ms-1" style="font-size:.7rem;color:#6b7280"></i>
+      </div>
+      <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:.85rem">
+        <li><a class="dropdown-item" href="/admin/configuracoes"><i class="bi bi-gear me-2"></i>Configurações</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-left me-2"></i>Sair</a></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     CONTEÚDO PRINCIPAL
+     Cada página admin herda este base e preenche o bloco content
+     Flash messages aparecem como toasts no canto superior direito
+     ============================================================ -->
+<main id="main-content">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="position-fixed top-0 end-0 p-3" style="z-index:9999">
+        {% for category, message in messages %}
+        <div class="toast align-items-center text-bg-{% if category=='success' %}success{% elif category=='danger' %}danger{% else %}warning{% endif %} border-0 show mb-2"
+             role="alert" data-bs-autohide="true" data-bs-delay="4000">
+          <div class="d-flex">
+            <div class="toast-body fw-semibold">{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</main>
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  sb.classList.toggle('show');
+  ov.style.display = sb.classList.contains('show') ? 'block' : 'none';
+}
+document.querySelectorAll('.toast').forEach(el => new bootstrap.Toast(el, {delay:4000}).show());
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
+
+  
+

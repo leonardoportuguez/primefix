@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}PrimeFix - OS #{{ os.id }}{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <h2>Solicitação #{{ os.id }}</h2>
+    <p><strong>Categoria:</strong> {{ os.categoria_nome or '-' }}</p>
+    <p><strong>Descrição:</strong> {{ os.descricao }}</p>
+    <p><strong>Endereço:</strong>
+        {{ os.bairro }}{% if os.cidade %}, {{ os.cidade }}{% endif %}
+        {% if os.logradouro %} — {{ os.logradouro }}{% if os.numero %}, {{ os.numero }}{% endif %}{% endif %}
+    </p>
+    <p><strong>Status:</strong> <span class="badge-{{ os.status }}">{{ os.status|replace('_',' ')|title }}</span></p>
+    {% if os.tecnico_nome %}
+    <p><strong>Técnico:</strong> {{ os.tecnico_nome }}</p>
+    {% endif %}
+  {% if os.valor_confirmado %}
+
+<p>
+    <strong>Valor Confirmado:</strong>
+    R$ {{ "%.2f"|format(os.valor_confirmado) }}
+</p>
+
+{% if os.aprovacao_cliente == 'aprovado' %}
+
+<div class="alert alert-success mt-3">
+    ✅ Você aprovou este serviço.
+</div>
+
+{% elif os.aprovacao_cliente == 'recusado' %}
+
+<div class="alert alert-warning mt-3">
+    ⚠️ Você recusou este serviço.
+</div>
+
+{% else %}
+
+<div class="mt-3">
+    <p class="mb-2">
+        <strong>Deseja autorizar a execução do serviço?</strong>
+    </p>
+
+    <div class="d-flex gap-2">
+
+        <form method="POST"
+              action="{{ url_for('client.aprovar_servico', os_id=os.id) }}">
+
+            <button type="submit"
+                    class="btn btn-success">
+                ✅ Aprovar serviço
+            </button>
+
+        </form>
+
+        <form method="POST"
+              action="{{ url_for('client.recusar_servico', os_id=os.id) }}">
+
+            <button type="submit"
+                    class="btn btn-outline-danger">
+                ❌ Recusar serviço
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+{% endif %}
+
+{% elif os.valor_sugerido %}
+
+<p>
+    <strong>Valor Sugerido:</strong>
+    R$ {{ "%.2f"|format(os.valor_sugerido) }}
+</p>
+
+{% endif %}
+    <p><strong>Criada em:</strong> {{ os.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+
+    <!-- ============================================================
+         FLASH CARDS DE HABILIDADES DO TÉCNICO (Item 9)
+         Só aparece se já tiver técnico atribuído E ele tiver
+         especialidades cadastradas. Mostra 2 por vez, com setas.
+         ============================================================ -->
+    {% if os.tecnico_nome and habilidades %}
+    <div class="mt-4">
+        <h5 class="fw-bold mb-3" style="font-size:1rem">🛠️ Especialidades de {{ os.tecnico_nome }}</h5>
+
+        <div class="d-flex align-items-center gap-2">
+            <!-- Seta pra ver as habilidades anteriores -->
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    id="btn-hab-anterior" onclick="mudarPaginaHabilidades(-1)">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+
+            <!-- Aqui o JavaScript desenha os 2 cards da página atual -->
+            <div id="habilidades-container" class="d-flex gap-2 flex-grow-1"></div>
+
+            <!-- Seta pra ver as próximas habilidades -->
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    id="btn-hab-proximo" onclick="mudarPaginaHabilidades(1)">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('client.home') }}" class="btn btn-secondary mt-4">Voltar</a>
+</section>
+
+{% if os.tecnico_nome and habilidades %}
+<script>
+// Lista de habilidades (categorias) vinda do backend — nome + ícone de cada uma.
+// |tojson escapa aspas e caracteres especiais com segurança pro JavaScript.
+const listaHabilidades = [
+    {% for h in habilidades %}
+    { nome: {{ h.nome|tojson }}, icone: {{ h.icone|tojson }} },
+    {% endfor %}
+];
+
+let paginaAtual = 0;      // qual "página" de 2 cards está sendo exibida agora
+const porPagina = 2;      // quantos cards aparecem por vez
+
+// Desenha na tela só os 2 cards da página atual
+function renderizarHabilidades(){
+    const container = document.getElementById('habilidades-container');
+    container.innerHTML = '';
+
+    const inicio = paginaAtual * porPagina;
+    const fim = inicio + porPagina;
+    const visiveis = listaHabilidades.slice(inicio, fim);
+
+    // Cria um card visual pra cada habilidade da página atual
+    visiveis.forEach(h => {
+        const card = document.createElement('div');
+        card.className = 'p-3 rounded border text-center flex-fill';
+        card.style.background = '#f8fafc';
+        card.innerHTML = `<div style="font-size:1.5rem">${h.icone || '🔧'}</div>
+                           <div style="font-size:.85rem;font-weight:600">${h.nome}</div>`;
+        container.appendChild(card);
+    });
+
+    // Desativa a seta "voltar" se já está na primeira página,
+    // e a seta "avançar" se já chegou na última
+    document.getElementById('btn-hab-anterior').disabled = (paginaAtual === 0);
+    document.getElementById('btn-hab-proximo').disabled  = (fim >= listaHabilidades.length);
+}
+
+// Chamada pelos botões de seta: direcao é -1 (voltar) ou +1 (avançar)
+function mudarPaginaHabilidades(direcao){
+    paginaAtual += direcao;
+    renderizarHabilidades();
+}
+
+// Desenha a primeira página assim que a tela termina de carregar
+renderizarHabilidades();
+</script>
+{% endif %}
+{% endblock %}

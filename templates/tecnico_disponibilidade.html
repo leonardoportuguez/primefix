@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Minha Disponibilidade — PrimeFix{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     TÍTULO DA PÁGINA
+     ============================================================ -->
+<h4 class="fw-bold mb-4">Minha Disponibilidade</h4>
+
+<!-- ============================================================
+     CARD — caixa visual do Bootstrap, só organiza o conteúdo
+     ============================================================ -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+
+    <p class="text-muted" style="font-size:.85rem">
+      Marque os dias em que você atende e defina o horário de início e fim.
+      Deixe desmarcado o dia em que não atende.
+    </p>
+
+    <!-- ============================================================
+         FORMULÁRIO — envia todos os 7 dias de uma vez só pro Flask.
+         Cada dia manda 3 campos: um checkbox "ativo_SEGUNDA", e os
+         horários "inicio_SEGUNDA" / "fim_SEGUNDA" — repetindo o padrão
+         pra cada um dos 7 dias permitidos pelo banco.
+         ============================================================ -->
+    <form method="POST" action="{{ url_for('technician.atualizar_disponibilidade') }}">
+
+      <!-- dias_map é passado pela rota Python: uma lista de tuplas
+           (chave_no_banco, nome_para_mostrar) — assim não repetimos
+           a lista de dias em dois lugares diferentes (HTML e Python) -->
+      {% for chave, nome_exibicao in dias_semana %}
+      <div class="row align-items-center py-2 border-bottom">
+
+        <!-- Checkbox "atendo nesse dia".
+             Se o técnico já tinha esse dia cadastrado, vem marcado
+             (checked), porque disponibilidade[chave] existe -->
+        <div class="col-4 col-md-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox"
+                   name="ativo_{{ chave }}" id="ativo_{{ chave }}"
+                   {% if chave in disponibilidade %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="ativo_{{ chave }}">
+              {{ nome_exibicao }}
+            </label>
+          </div>
+        </div>
+
+        <!-- Horário de início. Se já existir valor salvo, pré-preenche -->
+        <div class="col-4 col-md-4">
+          <input type="time" name="inicio_{{ chave }}" class="form-control form-control-sm"
+                 value="{{ disponibilidade[chave].hora_inicio if chave in disponibilidade else '' }}">
+        </div>
+
+        <!-- Horário de fim -->
+        <div class="col-4 col-md-4">
+          <input type="time" name="fim_{{ chave }}" class="form-control form-control-sm"
+                 value="{{ disponibilidade[chave].hora_fim if chave in disponibilidade else '' }}">
+        </div>
+
+      </div>
+      {% endfor %}
+
+      <!-- BOTÃO DE ENVIO -->
+      <button type="submit" class="btn btn-primary mt-4">Salvar disponibilidade</button>
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}

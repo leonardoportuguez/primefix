@@ -1,0 +1,259 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Financeiro — PrimeFix Admin{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-cash-stack me-2"></i>Financeiro
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     FINANCEIRO — REPASSES DOS TÉCNICOS
+     Cada OS possui seu próprio controle de pagamento.
+     ============================================================ -->
+
+<!-- ============================================================
+     RESUMO FINANCEIRO DOS REPASSES
+     ============================================================ -->
+
+<!-- Cabeçalho da página -->
+<div class="page-header">
+  <div>
+    <h2>Financeiro</h2>
+    <p>Controle de repasses aos técnicos por serviço finalizado</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon icon-total"><i class="bi bi-cash-stack"></i></div>
+      <div><div class="stat-val">R$ {{ "%.2f"|format(total_repasses) }}</div><div class="stat-lbl">Total em repasses</div></div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon icon-concluida"><i class="bi bi-check-circle"></i></div>
+      <div><div class="stat-val text-success">R$ {{ "%.2f"|format(total_pago) }}</div><div class="stat-lbl">Já pago</div></div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="stat-card">
+      <div class="stat-icon icon-pendente"><i class="bi bi-hourglass-split"></i></div>
+      <div><div class="stat-val" style="color:#ca8a04">R$ {{ "%.2f"|format(total_pendente) }}</div><div class="stat-lbl">Pendente de pagamento</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section-card">
+
+  <!-- CABEÇALHO -->
+  <div class="sc-header d-flex justify-content-between align-items-center">
+
+    <h6>
+      <i class="bi bi-cash-stack me-2 text-primary"></i>
+      Repasses dos Técnicos
+    </h6>
+
+    <span class="badge bg-primary">
+      {{ ordens|length }} OS
+    </span>
+
+  </div>
+
+
+  <!-- TABELA -->
+  <div class="table-responsive">
+
+    <table class="table table-hover table-admin mb-0">
+
+      <thead>
+        <tr>
+          <th>OS</th>
+          <th>Técnico</th>
+          <th>Serviço</th>
+          <th>Chave PIX</th>
+          <th>Valor do serviço</th>
+          <th>Repasse técnico</th>
+          <th>Pagamento</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+
+
+      <tbody>
+
+        {% for os in ordens %}
+
+               <tr class="{% if os.repasse_pago %}table-success{% else %}table-warning{% endif %}">
+
+          <!-- NÚMERO DA OS -->
+          <td class="fw-bold text-primary">
+            #{{ os.id }}
+          </td>
+
+          <!-- TÉCNICO -->
+          <td>
+            <strong>
+              {{ os.tecnico_nome }}
+            </strong>
+          </td>
+
+
+          <!-- SERVIÇO -->
+          <td>
+            {{ os.categoria_nome }}
+          </td>
+
+
+          <!-- PIX -->
+          <td>
+
+                       {% if os.chave_pix %}
+
+              <span title="Chave PIX" class="d-inline-flex align-items-center gap-1"
+                    style="font-size:.78rem;color:#2563eb;background:var(--azul-claro);
+                           padding:2px 10px;border-radius:20px;font-weight:600">
+                <i class="bi bi-qr-code" style="font-size:.7rem"></i>{{ os.chave_pix }}
+              </span>
+
+            {% else %}
+
+              <span class="text-danger">
+                Não cadastrado
+              </span>
+
+            {% endif %}
+
+          </td>
+
+
+          <!-- VALOR TOTAL DO SERVIÇO -->
+          <td>
+            R$ {{ "%.2f"|format(os.valor_confirmado) }}
+          </td>
+
+
+          <!-- VALOR DO TÉCNICO -->
+          <td class="fw-bold text-success">
+
+            R$
+            {{ "%.2f"|format(os.repasse_tecnico) }}
+
+            <br>
+
+            <small class="text-muted">
+              {{ (100-taxa_empresa)|int }}%
+            </small>
+
+          </td>
+
+
+          <!-- STATUS DO PAGAMENTO -->
+          <td>
+
+                      {% if os.repasse_pago %}
+
+              <span class="status-badge bs-concluida">
+                <span class="status-dot" style="background:#22c55e"></span>
+                Pago
+              </span>
+
+              {% if os.repasse_pago_em %}
+
+                <br>
+
+                <small class="text-muted">
+                  {{ os.repasse_pago_em.strftime('%d/%m/%Y %H:%M') }}
+                </small>
+
+              {% endif %}
+
+            {% else %}
+
+                         <span class="status-badge bs-atribuida" style="background:#fef9c3;color:#92400e">
+                <span class="status-dot" style="background:#ca8a04"></span>
+                Pendente
+              </span>
+
+            {% endif %}
+
+          </td>
+
+
+          <!-- AÇÃO -->
+          <td>
+
+            {% if not os.repasse_pago %}
+
+              <form
+                action="{{ url_for(
+                    'admin.financeiro_marcar_pago_os',
+                    os_id=os.id
+                ) }}"
+                method="POST"
+                onsubmit="return confirm(
+                    'Confirma que o repasse da OS #{{ os.id }} já foi pago ao técnico?'
+                );"
+              >
+
+                <button
+                  type="submit"
+                  class="btn btn-sm btn-success"
+                >
+
+                  <i class="bi bi-check-lg"></i>
+
+                  Marcar como pago
+
+                </button>
+
+              </form>
+
+            {% else %}
+
+              <span class="text-success fw-semibold">
+
+                <i class="bi bi-check-circle-fill"></i>
+
+                Pago
+
+              </span>
+
+            {% endif %}
+
+          </td>
+
+        </tr>
+
+
+        {% else %}
+
+        <!-- NENHUMA OS -->
+        <tr>
+
+                  <td colspan="8">
+            <div class="empty-state">
+              <i class="bi bi-cash-stack"></i>
+              <p>Nenhuma OS finalizada para o financeiro.</p>
+            </div>
+          </td>
+
+        </tr>
+
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+{% endblock %}

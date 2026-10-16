@@ -1,0 +1,341 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Desempenho dos Técnicos — PrimeFix Admin{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-bar-chart-fill me-2"></i>Desempenho dos Técnicos
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     FILTRO DE PERÍODO
+     ============================================================ -->
+<div class="section-card mb-4">
+
+  <div class="sc-header">
+    <h6>
+      <i class="bi bi-calendar3 me-2 text-primary"></i>
+      Período de análise
+    </h6>
+  </div>
+
+  <div class="p-3">
+
+    <form method="GET"
+        action="{{ url_for('admin.relatorios') }}">
+
+      <div class="row g-3 align-items-end">
+
+        <!-- PERÍODO -->
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">
+            Período
+          </label>
+
+          <select name="periodo"
+                  class="form-select"
+                  onchange="mostrarDatas(this.value)">
+
+            <option value="semana"
+              {% if periodo == 'semana' %}selected{% endif %}>
+          <option value="7_dias"
+  {% if periodo == '7_dias' %}selected{% endif %}>
+  Últimos 7 dias
+</option>
+
+<option value="15_dias"
+  {% if periodo == '15_dias' %}selected{% endif %}>
+  Últimos 15 dias
+</option>
+
+<option value="30_dias"
+  {% if periodo == '30_dias' %}selected{% endif %}>
+  Últimos 30 dias
+</option>
+
+<option value="3_meses"
+  {% if periodo == '3_meses' %}selected{% endif %}>
+  Últimos 3 meses
+</option>
+
+<option value="6_meses"
+  {% if periodo == '6_meses' %}selected{% endif %}>
+  Últimos 6 meses
+</option>
+
+<option value="1_ano"
+  {% if periodo == '1_ano' %}selected{% endif %}>
+  Último 1 ano
+</option>
+
+<option value="2_anos"
+  {% if periodo == '2_anos' %}selected{% endif %}>
+  Últimos 2 anos
+</option>
+
+<option value="todos"
+  {% if periodo == 'todos' %}selected{% endif %}>
+  Todo o período
+</option>
+
+<option value="personalizado"
+  {% if periodo == 'personalizado' %}selected{% endif %}>
+  Período personalizado
+</option>
+
+          </select>
+        </div>
+
+        <!-- DATA INICIAL -->
+        <div class="col-md-3" id="campoDataInicio">
+          <label class="form-label fw-semibold">
+            Data inicial
+          </label>
+
+          <input type="date"
+                 name="data_inicio"
+                 class="form-control"
+                 value="{{ data_inicio }}">
+        </div>
+
+        <!-- DATA FINAL -->
+        <div class="col-md-3" id="campoDataFim">
+          <label class="form-label fw-semibold">
+            Data final
+          </label>
+
+          <input type="date"
+                 name="data_fim"
+                 class="form-control"
+                 value="{{ data_fim }}">
+        </div>
+
+        <!-- BOTÃO -->
+        <div class="col-md-2">
+          <button type="submit"
+                  class="btn btn-primary w-100">
+            <i class="bi bi-search me-1"></i>
+            Consultar
+          </button>
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+
+<!-- ============================================================
+     RESUMO GERAL
+     ============================================================ -->
+<div class="row g-3 mb-4">
+
+  <!-- TOTAL MOVIMENTADO -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+
+      <div class="card-body">
+
+        <small class="text-muted">
+          Total dos serviços
+        </small>
+
+        <h4 class="fw-bold mt-1">
+          R$ {{ "%.2f"|format(total_geral) }}
+        </h4>
+
+        <small class="text-muted">
+          No período selecionado
+        </small>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- REPASSE -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+
+      <div class="card-body">
+
+        <small class="text-muted">
+          Repasse aos técnicos
+        </small>
+
+        <h4 class="fw-bold mt-1 text-success">
+          R$ {{ "%.2f"|format(total_repasse) }}
+        </h4>
+
+        <small class="text-muted">
+          {{ (100 - taxa_empresa)|int }}% dos serviços
+        </small>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- PRIMEFIX -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+
+      <div class="card-body">
+
+        <small class="text-muted">
+          Receita PrimeFix
+        </small>
+
+        <h4 class="fw-bold mt-1 text-primary">
+          R$ {{ "%.2f"|format(total_taxa) }}
+        </h4>
+
+        <small class="text-muted">
+          Taxa de {{ taxa_empresa|int }}%
+        </small>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     RANKING DOS TÉCNICOS
+     ============================================================ -->
+<div class="section-card">
+
+  <div class="sc-header">
+    <h6>
+      <i class="bi bi-trophy-fill me-2 text-warning"></i>
+      Desempenho por Técnico
+    </h6>
+  </div>
+
+  <div class="table-responsive">
+
+    <table class="table table-hover table-admin mb-0">
+
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Técnico</th>
+          <th>Serviços</th>
+          <th>Total gerado</th>
+          <th>Repasse</th>
+          <th>PrimeFix</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {% for tec in tecnicos %}
+
+        <tr>
+
+          <!-- POSIÇÃO -->
+          <td class="fw-bold">
+            {{ loop.index }}º
+          </td>
+
+          <!-- TÉCNICO -->
+          <td class="fw-semibold">
+            {{ tec.nome }}
+          </td>
+
+          <!-- QUANTIDADE -->
+          <td>
+            <span class="badge bg-primary">
+              {{ tec.quantidade_servicos }}
+            </span>
+          </td>
+
+          <!-- TOTAL -->
+          <td>
+            R$ {{ "%.2f"|format(tec.total_bruto) }}
+          </td>
+
+          <!-- REPASSE -->
+          <td class="text-success fw-semibold">
+            R$ {{ "%.2f"|format(tec.repasse_tecnico) }}
+          </td>
+
+          <!-- PRIMEFIX -->
+          <td class="text-primary fw-semibold">
+            R$ {{ "%.2f"|format(tec.taxa_empresa) }}
+          </td>
+
+        </tr>
+
+        {% else %}
+
+        <tr>
+
+          <td colspan="6"
+              class="text-center text-muted py-4">
+
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+
+            Nenhum serviço finalizado encontrado
+            neste período.
+
+          </td>
+
+        </tr>
+
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     JAVASCRIPT DO FILTRO
+     ============================================================ -->
+<script>
+
+function mostrarDatas(periodo) {
+
+    const inicio = document.getElementById("campoDataInicio");
+    const fim = document.getElementById("campoDataFim");
+
+    if (periodo === "personalizado") {
+
+        inicio.style.display = "";
+        fim.style.display = "";
+
+    } else {
+
+        inicio.style.display = "none";
+        fim.style.display = "none";
+
+    }
+}
+
+
+// Executa ao carregar a página
+document.addEventListener("DOMContentLoaded", function () {
+
+    const select = document.querySelector("select[name='periodo']");
+
+    if (select) {
+        mostrarDatas(select.value);
+    }
+
+});
+
+</script>
+
+{% endblock %}

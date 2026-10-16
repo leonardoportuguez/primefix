@@ -1,0 +1,337 @@
+{% extends "base_admin.html" %}
+{% block title %}Configurações — PrimeFix{% endblock %}
+{% block page_title %}<i class="bi bi-gear me-2"></i>Configurações{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-6">
+
+    <!-- WHATSAPP — número usado no botão de contato do site -->
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-whatsapp me-2 text-success"></i>WhatsApp Oficial</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/configuracoes" method="POST">
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            Número do WhatsApp
+            <small class="text-muted">(com DDI e DDD, ex: 5561999887766)</small>
+          </label>
+          <input type="text" name="whatsapp" value="{{ whatsapp }}"
+                 class="form-control mb-3" placeholder="5561999887766">
+
+          <!-- Preserva os campos dos outros cards ao salvar essa seção -->
+          <input type="hidden" name="taxa_empresa" value="{{ taxa_empresa }}">
+          <input type="hidden" name="suporte_email" value="{{ suporte_email }}">
+          <input type="hidden" name="suporte_telefone" value="{{ suporte_telefone }}">
+          <input type="hidden" name="modo_manutencao" value="{{ 'on' if modo_manutencao else '' }}">
+          <input type="hidden" name="taxa_visita_ativa" value="{{ 'on' if taxa_visita_ativa else '' }}">
+          <input type="hidden" name="taxa_visita_valor" value="{{ taxa_visita_valor }}">
+          <input type="hidden" name="taxa_visita_mensagem" value="{{ taxa_visita_mensagem }}">
+          <input type="hidden" name="nota_minima_tecnico" value="{{ nota_minima_tecnico }}">
+          <input type="hidden" name="limite_os_simultaneas" value="{{ limite_os_simultaneas }}">
+          <input type="hidden" name="prazo_resposta_tecnico_horas" value="{{ prazo_resposta_tecnico_horas }}">
+
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-2"></i>Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- SUPORTE — e-mail/telefone separados do WhatsApp, pra reclamações formais ou parcerias -->
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-headset me-2 text-info"></i>Contato de Suporte</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/configuracoes" method="POST">
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            E-mail de suporte
+          </label>
+          <input type="email" name="suporte_email" value="{{ suporte_email }}"
+                 class="form-control mb-3" placeholder="suporte@primefix.com">
+
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            Telefone de suporte
+          </label>
+          <input type="text" name="suporte_telefone" value="{{ suporte_telefone }}"
+                 class="form-control mb-2" placeholder="(61) 99999-9999">
+          <small class="text-muted d-block mb-3" style="font-size:.78rem">
+            Canal separado do WhatsApp — indicado pra reclamações formais ou parcerias.
+          </small>
+
+          <!-- Preserva os campos dos outros cards ao salvar essa seção -->
+          <input type="hidden" name="whatsapp" value="{{ whatsapp }}">
+          <input type="hidden" name="taxa_empresa" value="{{ taxa_empresa }}">
+          <input type="hidden" name="taxa_visita_ativa" value="{{ 'on' if taxa_visita_ativa else '' }}">
+          <input type="hidden" name="taxa_visita_valor" value="{{ taxa_visita_valor }}">
+          <input type="hidden" name="modo_manutencao" value="{{ 'on' if modo_manutencao else '' }}">
+          <input type="hidden" name="taxa_visita_mensagem" value="{{ taxa_visita_mensagem }}">
+          <input type="hidden" name="nota_minima_tecnico" value="{{ nota_minima_tecnico }}">
+          <input type="hidden" name="limite_os_simultaneas" value="{{ limite_os_simultaneas }}">
+          <input type="hidden" name="prazo_resposta_tecnico_horas" value="{{ prazo_resposta_tecnico_horas }}">
+
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-2"></i>Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- DIVISÃO FINANCEIRA — agora editável pelo admin -->
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-percent me-2 text-primary"></i>Divisão Financeira</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/configuracoes" method="POST">
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            Porcentagem da Empresa (%)
+          </label>
+          <!--
+            min/max/step travam o campo entre 0 e 100 direto no navegador.
+            O valor do técnico (77%) é calculado automaticamente aqui embaixo
+            via JavaScript, só pra mostrar — quem manda no cálculo real é o
+            back-end, que sempre faz 100 - taxa_empresa
+          -->
+          <input type="number" name="taxa_empresa" id="taxa_empresa"
+                 value="{{ taxa_empresa }}" min="0" max="100" step="1"
+                 class="form-control mb-2"
+                 oninput="document.getElementById('taxa_tecnico_preview').innerText = 100 - (this.value || 0)">
+          <small class="text-muted d-block mb-3" style="font-size:.78rem">
+            🔧 Técnico recebe automaticamente: <strong id="taxa_tecnico_preview">{{ 100 - taxa_empresa|int }}</strong>%
+          </small>
+
+          <!-- Preserva os campos dos outros cards ao salvar essa mesma seção -->
+          <input type="hidden" name="whatsapp" value="{{ whatsapp }}">
+          <input type="hidden" name="taxa_visita_ativa" value="{{ 'on' if taxa_visita_ativa else '' }}">
+          <input type="hidden" name="taxa_visita_valor" value="{{ taxa_visita_valor }}">
+          <input type="hidden" name="suporte_email" value="{{ suporte_email }}">
+          <input type="hidden" name="suporte_telefone" value="{{ suporte_telefone }}">
+          <input type="hidden" name="modo_manutencao" value="{{ 'on' if modo_manutencao else '' }}">
+          <input type="hidden" name="taxa_visita_mensagem" value="{{ taxa_visita_mensagem }}">
+          <input type="hidden" name="nota_minima_tecnico" value="{{ nota_minima_tecnico }}">
+          <input type="hidden" name="limite_os_simultaneas" value="{{ limite_os_simultaneas }}">
+          <input type="hidden" name="prazo_resposta_tecnico_horas" value="{{ prazo_resposta_tecnico_horas }}">
+
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-2"></i>Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODO MANUTENÇÃO — trava novos cadastros/OS temporariamente -->
+    <div class="section-card mb-3 border border-danger">
+      <div class="sc-header">
+        <h6><i class="bi bi-cone-striped me-2 text-danger"></i>Modo Manutenção</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/configuracoes" method="POST">
+
+          <!-- Checkbox liga/desliga o modo manutenção -->
+          <div class="form-check form-switch mb-3">
+            <input type="checkbox" class="form-check-input" id="modo_manutencao"
+                   name="modo_manutencao" {{ 'checked' if modo_manutencao else '' }}>
+            <label class="form-check-label fw-semibold" for="modo_manutencao" style="font-size:.88rem">
+              Ativar modo manutenção
+            </label>
+          </div>
+          <small class="text-danger d-block mb-3" style="font-size:.78rem">
+            ⚠️ Enquanto ativo, novos cadastros e novas OS ficam bloqueados
+            pros clientes e técnicos. Use durante deploy ou mudanças grandes.
+          </small>
+
+          <!-- Preserva os outros campos ao salvar essa seção -->
+          <input type="hidden" name="whatsapp" value="{{ whatsapp }}">
+          <input type="hidden" name="taxa_empresa" value="{{ taxa_empresa }}">
+          <input type="hidden" name="suporte_email" value="{{ suporte_email }}">
+          <input type="hidden" name="suporte_telefone" value="{{ suporte_telefone }}">
+          <input type="hidden" name="taxa_visita_ativa" value="{{ 'on' if taxa_visita_ativa else '' }}">
+          <input type="hidden" name="taxa_visita_valor" value="{{ taxa_visita_valor }}">
+          <input type="hidden" name="taxa_visita_mensagem" value="{{ taxa_visita_mensagem }}">
+          <input type="hidden" name="nota_minima_tecnico" value="{{ nota_minima_tecnico }}">
+          <input type="hidden" name="limite_os_simultaneas" value="{{ limite_os_simultaneas }}">
+          <input type="hidden" name="prazo_resposta_tecnico_horas" value="{{ prazo_resposta_tecnico_horas }}">
+
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-check-lg me-2"></i>Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAXA DE VISITA — pode ser ativada/desativada e ter o valor alterado -->
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-cash-coin me-2 text-warning"></i>Taxa de Visita</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/configuracoes" method="POST">
+
+          <!-- Checkbox liga/desliga a cobrança da taxa -->
+          <div class="form-check form-switch mb-3">
+            <input type="checkbox" class="form-check-input" id="taxa_visita_ativa"
+                   name="taxa_visita_ativa" {{ 'checked' if taxa_visita_ativa else '' }}>
+            <label class="form-check-label" for="taxa_visita_ativa" style="font-size:.88rem">
+              Cobrar taxa de visita/deslocamento
+            </label>
+          </div>
+
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            Valor da taxa (R$)
+          </label>
+          <input type="number" name="taxa_visita_valor" value="{{ taxa_visita_valor }}"
+                 min="0" step="0.01" class="form-control mb-2">
+          <small class="text-muted d-block mb-3" style="font-size:.78rem">
+            Quando ativa, esse valor é exibido de forma explícita pro cliente antes da confirmação do serviço.
+          </small>
+
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            Mensagem exibida ao cliente
+          </label>
+          <!-- Use {valor} dentro do texto — o sistema substitui
+               automaticamente pelo valor em R$ configurado acima -->
+          <textarea name="taxa_visita_mensagem" class="form-control mb-1"
+                    rows="2">{{ taxa_visita_mensagem }}</textarea>
+          <small class="text-muted d-block mb-3" style="font-size:.78rem">
+            Use <code>{valor}</code> no texto onde quiser que o valor em R$ apareça.
+          </small>
+
+          <!-- Preserva os outros campos ao salvar essa seção -->
+          <input type="hidden" name="whatsapp" value="{{ whatsapp }}">
+          <input type="hidden" name="taxa_empresa" value="{{ taxa_empresa }}">
+          <input type="hidden" name="suporte_email" value="{{ suporte_email }}">
+          <input type="hidden" name="suporte_telefone" value="{{ suporte_telefone }}">
+          <input type="hidden" name="modo_manutencao" value="{{ 'on' if modo_manutencao else '' }}">
+          <input type="hidden" name="nota_minima_tecnico" value="{{ nota_minima_tecnico }}">
+          <input type="hidden" name="limite_os_simultaneas" value="{{ limite_os_simultaneas }}">
+          <input type="hidden" name="prazo_resposta_tecnico_horas" value="{{ prazo_resposta_tecnico_horas }}">
+
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-2"></i>Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- NOTA MÍNIMA DO TÉCNICO — ainda sem efeito prático, pois o
+         sistema de avaliação de técnicos não existe. Guardado aqui
+         pra já ficar pronto quando essa feature for construída. -->
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-star-half me-2 text-warning"></i>Nota Mínima do Técnico</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/configuracoes" method="POST">
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            Nota mínima (0 a 10)
+          </label>
+          <input type="number" name="nota_minima_tecnico" value="{{ nota_minima_tecnico }}"
+                 min="0" max="10" step="0.1" class="form-control mb-2">
+          <small class="text-muted d-block mb-3" style="font-size:.78rem">
+            ⚠️ Ainda sem efeito automático — o sistema de avaliação (notas) dos
+            técnicos ainda não existe no PrimeFix. Esse valor fica guardado
+            pra já estar pronto quando essa funcionalidade for criada.
+          </small>
+
+          <!-- Preserva os outros campos ao salvar essa seção -->
+          <input type="hidden" name="whatsapp" value="{{ whatsapp }}">
+          <input type="hidden" name="taxa_empresa" value="{{ taxa_empresa }}">
+          <input type="hidden" name="suporte_email" value="{{ suporte_email }}">
+          <input type="hidden" name="suporte_telefone" value="{{ suporte_telefone }}">
+          <input type="hidden" name="modo_manutencao" value="{{ 'on' if modo_manutencao else '' }}">
+          <input type="hidden" name="taxa_visita_ativa" value="{{ 'on' if taxa_visita_ativa else '' }}">
+          <input type="hidden" name="taxa_visita_valor" value="{{ taxa_visita_valor }}">
+          <input type="hidden" name="taxa_visita_mensagem" value="{{ taxa_visita_mensagem }}">
+          <input type="hidden" name="limite_os_simultaneas" value="{{ limite_os_simultaneas }}">
+          <input type="hidden" name="prazo_resposta_tecnico_horas" value="{{ prazo_resposta_tecnico_horas }}">
+
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-2"></i>Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- LIMITE DE OS SIMULTÂNEAS POR TÉCNICO — com efeito real:
+         verificado na hora de atribuir um técnico a uma OS. -->
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-list-check me-2 text-primary"></i>Limite de OS Simultâneas</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/configuracoes" method="POST">
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            Máximo de OS ativas por técnico
+          </label>
+          <input type="number" name="limite_os_simultaneas" value="{{ limite_os_simultaneas }}"
+                 min="1" step="1" class="form-control mb-2">
+          <small class="text-muted d-block mb-3" style="font-size:.78rem">
+            ✅ Já tem efeito real: o admin não consegue atribuir uma nova OS a um
+            técnico que já esteja com esse número de OS em "atribuída" ou
+            "em andamento" ao mesmo tempo.
+          </small>
+
+          <!-- Preserva os outros campos ao salvar essa seção -->
+          <input type="hidden" name="whatsapp" value="{{ whatsapp }}">
+          <input type="hidden" name="taxa_empresa" value="{{ taxa_empresa }}">
+          <input type="hidden" name="suporte_email" value="{{ suporte_email }}">
+          <input type="hidden" name="suporte_telefone" value="{{ suporte_telefone }}">
+          <input type="hidden" name="modo_manutencao" value="{{ 'on' if modo_manutencao else '' }}">
+          <input type="hidden" name="taxa_visita_ativa" value="{{ 'on' if taxa_visita_ativa else '' }}">
+          <input type="hidden" name="taxa_visita_valor" value="{{ taxa_visita_valor }}">
+          <input type="hidden" name="taxa_visita_mensagem" value="{{ taxa_visita_mensagem }}">
+          <input type="hidden" name="nota_minima_tecnico" value="{{ nota_minima_tecnico }}">
+          <input type="hidden" name="prazo_resposta_tecnico_horas" value="{{ prazo_resposta_tecnico_horas }}">
+
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-2"></i>Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- PRAZO DE RESPOSTA DO TÉCNICO — com efeito real: verificado
+         toda vez que o admin abre o dashboard (_reatribuir_os_vencidas). -->
+    <div class="section-card">
+      <div class="sc-header">
+        <h6><i class="bi bi-hourglass-split me-2 text-danger"></i>Prazo de Resposta do Técnico</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/configuracoes" method="POST">
+          <label class="form-label fw-semibold" style="font-size:.88rem">
+            Prazo para o técnico responder (em horas)
+          </label>
+          <input type="number" name="prazo_resposta_tecnico_horas" value="{{ prazo_resposta_tecnico_horas }}"
+                 min="1" step="1" class="form-control mb-2">
+          <small class="text-muted d-block mb-3" style="font-size:.78rem">
+            ✅ Já tem efeito real: se o técnico não atender a OS dentro desse
+            prazo, ela volta sozinha pra fila (status "aberta", sem técnico).
+            A verificação roda toda vez que o admin abre o Dashboard — não é
+            em tempo real contínuo.
+          </small>
+
+          <!-- Preserva os outros campos ao salvar essa seção -->
+          <input type="hidden" name="whatsapp" value="{{ whatsapp }}">
+          <input type="hidden" name="taxa_empresa" value="{{ taxa_empresa }}">
+          <input type="hidden" name="suporte_email" value="{{ suporte_email }}">
+          <input type="hidden" name="suporte_telefone" value="{{ suporte_telefone }}">
+          <input type="hidden" name="modo_manutencao" value="{{ 'on' if modo_manutencao else '' }}">
+          <input type="hidden" name="taxa_visita_ativa" value="{{ 'on' if taxa_visita_ativa else '' }}">
+          <input type="hidden" name="taxa_visita_valor" value="{{ taxa_visita_valor }}">
+          <input type="hidden" name="taxa_visita_mensagem" value="{{ taxa_visita_mensagem }}">
+          <input type="hidden" name="nota_minima_tecnico" value="{{ nota_minima_tecnico }}">
+          <input type="hidden" name="limite_os_simultaneas" value="{{ limite_os_simultaneas }}">
+
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-check-lg me-2"></i>Salvar
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

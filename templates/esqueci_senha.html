@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Recuperar Senha — PrimeFix{% endblock %}
+
+{% block content %}
+
+<!-- Card centralizado, mesmo padrão visual usado em login/cadastro -->
+<div class="row justify-content-center mt-4">
+  <div class="col-12 col-md-5">
+    <div class="card border-0 shadow-sm p-4">
+
+      <h5 class="fw-bold mb-3">Recuperar senha</h5>
+
+      <!-- Texto explicando o que vai acontecer ao enviar o formulário -->
+      <p class="text-muted" style="font-size:.9rem">
+        Informe seu e-mail cadastrado. Enviaremos um link para você criar uma nova senha.
+      </p>
+
+      <!-- Formulário simples: só pede o e-mail.
+           O POST vai pra rota esqueci_senha() em app.py, que gera
+           o token e dispara o e-mail (se o e-mail existir no banco) -->
+      <form method="POST">
+        <label class="form-label">E-mail</label>
+        <input type="email" name="email" class="form-control mb-3" required>
+
+        <button type="submit" class="btn btn-primary w-100">
+          Enviar link de recuperação
+        </button>
+      </form>
+
+      <!-- Link de volta pro login, caso o usuário desista ou tenha
+           clicado em "esqueci minha senha" por engano -->
+      <a href="{{ url_for('login') }}" class="d-block text-center mt-3" style="font-size:.85rem">
+        ← Voltar para o login
+      </a>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

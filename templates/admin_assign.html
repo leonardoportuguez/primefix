@@ -1,0 +1,44 @@
+{% extends "base_admin.html" %}
+{% block title %}Atribuir Técnico — PrimeFix{% endblock %}
+{% block page_title %}<i class="bi bi-person-check me-2"></i>Atribuir Técnico{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-6">
+    <div class="section-card">
+
+      <!-- Cabeçalho com número da OS e botão voltar -->
+      <div class="sc-header">
+        <h6><i class="bi bi-clipboard-list me-2 text-primary"></i>OS #{{ os.id }}</h6>
+        <a href="/admin/dashboard" class="btn btn-sm btn-outline-secondary">← Voltar</a>
+      </div>
+
+      <div class="p-3">
+
+        <!-- Resumo da OS para o admin saber o que está atribuindo -->
+        <div class="mb-3 p-3 rounded" style="background:#f8fafc;font-size:.88rem">
+          <div><strong>Cliente:</strong> {{ os.cliente_nome if os.cliente_nome else '—' }}</div>
+          <div><strong>Endereço:</strong> {{ os.endereco or '—' }}</div>
+          <div><strong>Descrição:</strong> {{ os.descricao or '—' }}</div>
+        </div>
+
+        <!-- Formulário de seleção do técnico -->
+        <form action="/admin/assign/{{ os.id }}" method="POST">
+          <label class="form-label fw-semibold">Selecionar técnico</label>
+          <select name="technician_id" class="form-select mb-3" required>
+            <option value="">Escolha um técnico...</option>
+            {% for tec in tecnicos %}
+            <option value="{{ tec.id }}">{{ tec.nome }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-person-check me-2"></i>Atribuir Técnico
+          </button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

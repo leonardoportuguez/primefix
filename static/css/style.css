@@ -1,0 +1,221 @@
+/* ============================================================
+   PRIMEFIX — ESTILOS GLOBAIS + BOOTSTRAP CUSTOMIZADO
+   ============================================================ */
+
+:root {
+  --azul-escuro:   #1E3A5F;
+  --azul-destaque: #2563EB;
+  --verde:         #22C55E;
+  --amarelo:       #FACC15;
+  --cinza-claro:   #F3F4F6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* Ativa rolagem suave ao clicar em links de âncora (#como-funciona, #servicos etc) */
+html {
+  scroll-behavior: smooth;
+}
+body {
+  font-family: 'Segoe UI', -apple-system, Roboto, Arial, sans-serif;
+  background-color: var(--cinza-claro);
+  color: #1f2933;
+  line-height: 1.6;
+}
+
+/* NAVBAR */
+.navbar-primefix {
+  background-color: var(--azul-escuro) !important;
+}
+.navbar-primefix .navbar-brand {
+  color: #fff !important;
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+.navbar-primefix .navbar-brand span { color: var(--amarelo); }
+.navbar-primefix .nav-link { color: rgba(255,255,255,.85) !important; }
+.navbar-primefix .nav-link:hover { color: #fff !important; }
+.navbar-primefix .user-info { color: rgba(255,255,255,.7); font-size:.85rem; }
+
+/* CONTAINER */
+.container { max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+
+/* HERO */
+.hero { text-align: center; padding: 5rem 1rem 3rem; }
+.hero h1 { font-size: 2.6rem; font-weight: 800; color: var(--azul-escuro); }
+.hero p  { color: #6b7280; font-size: 1.1rem; margin-top: .5rem; }
+.hero-actions { margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* BOTÕES */
+.btn-pf-primary {
+  background: var(--azul-destaque); color: #fff;
+  padding: .75rem 2rem; border-radius: 8px; font-weight: 700;
+  text-decoration: none; display: inline-block; border: none;
+  transition: background .2s;
+}
+.btn-pf-primary:hover { background: #1d4ed8; color: #fff; }
+.btn-pf-secondary {
+  background: #fff; color: var(--azul-escuro);
+  padding: .75rem 2rem; border-radius: 8px; font-weight: 700;
+  text-decoration: none; display: inline-block;
+  border: 2px solid var(--azul-escuro); transition: all .2s;
+}
+.btn-pf-secondary:hover { background: var(--azul-escuro); color: #fff; }
+.btn-whatsapp {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: #25d366; color: #fff; padding: .75rem 1.5rem;
+  border-radius: 50px; font-weight: 700; text-decoration: none;
+  box-shadow: 0 4px 12px rgba(37,211,102,.3); transition: all .2s;
+}
+.btn-whatsapp:hover { background: #1ebe5d; color: #fff; transform: translateY(-1px); }
+
+/* SEÇÃO SERVIÇOS */
+.services-section { padding: 4rem 1rem; background: var(--cinza-claro); }
+.section-tag {
+  color: #d97706; font-weight: 700; font-size: .8rem;
+  letter-spacing: 1px; text-transform: uppercase; display: block;
+  text-align: center; margin-bottom: .5rem;
+}
+.services-section h2 {
+  font-size: 2rem; color: var(--azul-escuro);
+  text-align: center; margin-bottom: .5rem; font-weight: 800;
+}
+.section-subtitle {
+  color: #6b7280; max-width: 500px;
+  margin: 0 auto 2.5rem; text-align: center;
+}
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem; max-width: 960px; margin: 0 auto;
+}
+.service-card {
+  background: #fff; border-radius: 12px; padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  transition: transform .2s, box-shadow .2s;
+}
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+}
+.service-icon { font-size: 2.2rem; margin-bottom: .8rem; display: block; }
+.service-card h3 { font-size: 1rem; color: #1f2933; margin-bottom: .4rem; font-weight: 700; }
+.service-card p  { color: #6b7280; font-size: .88rem; }
+
+/* SEÇÃO COMO FUNCIONA */
+.como-section { padding: 4rem 1rem; background: #fff; }
+.como-section h2 { text-align: center; font-size: 2rem; color: var(--azul-escuro); font-weight: 800; margin-bottom: 3rem; }
+.como-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 2rem; max-width: 960px; margin: 0 auto; }
+.como-item { text-align: center; }
+.como-numero {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--azul-destaque); color: #fff;
+  font-size: 1.3rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem;
+}
+.como-item h3 { font-size: 1rem; font-weight: 700; color: #1f2933; margin-bottom: .4rem; }
+.como-item p  { color: #6b7280; font-size: .88rem; }
+
+/* SEÇÃO POR QUE PRIMEFIX */
+.porq-section { padding: 4rem 1rem; background: var(--azul-escuro); }
+.porq-section h2 { text-align: center; font-size: 2rem; color: #fff; font-weight: 800; margin-bottom: 3rem; }
+.porq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 2rem; max-width: 960px; margin: 0 auto; }
+.porq-item { text-align: center; }
+.porq-icon { font-size: 2.2rem; margin-bottom: .8rem; display: block; }
+.porq-item h3 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: .4rem; }
+.porq-item p  { color: rgba(255,255,255,.65); font-size: .88rem; }
+
+/* SEÇÃO DEPOIMENTOS */
+.dep-section { padding: 4rem 1rem; background: var(--cinza-claro); }
+.dep-section h2 { text-align: center; font-size: 2rem; color: var(--azul-escuro); font-weight: 800; margin-bottom: 2.5rem; }
+.dep-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 1.5rem; max-width: 960px; margin: 0 auto; }
+.dep-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+.dep-estrelas { color: #facc15; font-size: 1rem; margin-bottom: .6rem; }
+.dep-texto { color: #374151; font-size: .9rem; font-style: italic; margin-bottom: 1rem; }
+.dep-autor { display: flex; align-items: center; gap: .7rem; }
+.dep-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--azul-destaque); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .9rem;
+}
+.dep-nome { font-weight: 700; font-size: .88rem; color: #1f2933; }
+.dep-bairro { font-size: .78rem; color: #9ca3af; }
+
+/* CTA FINAL */
+.cta-section {
+  padding: 4rem 1rem; background: var(--azul-destaque); text-align: center;
+}
+.cta-section h2 { font-size: 2rem; color: #fff; font-weight: 800; margin-bottom: .8rem; }
+.cta-section p  { color: rgba(255,255,255,.8); margin-bottom: 2rem; }
+
+/* FOOTER */
+.footer {
+  text-align: center; padding: 2rem 1rem;
+  background: var(--azul-escuro); color: rgba(255,255,255,.5);
+  font-size: .85rem;
+}
+
+/* FLASH MESSAGES */
+.flash-messages { margin-bottom: 1rem; }
+.flash { padding: .7rem 1rem; border-radius: 6px; margin-bottom: .5rem; font-size: .9rem; }
+.flash-success { background: #d1fae5; color: #065f46; }
+.flash-danger  { background: #fee2e2; color: #991b1b; }
+.flash-warning { background: #fef3c7; color: #92400e; }
+
+/* FORMULÁRIOS GERAIS */
+.form-section {
+  background: #fff; padding: 1.5rem; border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); margin-bottom: 2rem;
+}
+.form-section label { display: block; margin: .8rem 0 .3rem; font-weight: 600; font-size: .9rem; }
+.form-section input,
+.form-section select,
+.form-section textarea {
+  width: 100%; padding: .6rem .8rem;
+  border: 1.5px solid #d1d5db; border-radius: 6px; font-size: .95rem;
+  transition: border-color .2s;
+}
+.form-section input:focus,
+.form-section select:focus,
+.form-section textarea:focus {
+  border-color: var(--azul-destaque); outline: none;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+/* TELA DE LOGIN — centraliza o card na página inteira.
+   calc(100vh - 260px) desconta aproximadamente a altura do cabeçalho +
+   rodapé, pra centralizar em relação ao espaço útil da tela, não à
+   altura total do navegador (senão o card ficaria puxado pra baixo) */
+.login-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 260px);
+  padding: 2rem 1rem;
+}
+.login-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* TABELAS */
+.table-pf { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.table-pf th { background: #f8fafc; padding: .7rem 1rem; font-weight: 700; color: #555; border-bottom: 2px solid #eee; }
+.table-pf td { padding: .7rem 1rem; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+.table-pf tr:hover td { background: #fafafa; }
+
+/* STATUS BADGES */
+.badge-aberta     { background:#fee2e2; color:#991b1b; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.badge-atribuida  { background:#dbeafe; color:#1d4ed8; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.badge-andamento  { background:#ede9fe; color:#6d28d9; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.badge-concluida  { background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.badge-cancelada  { background:#f3f4f6; color:#6b7280; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.badge-em_andamento { background:#ede9fe; color:#6d28d9; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+.badge-finalizada   { background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:20px; font-size:.75rem; font-weight:700; }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.8rem; }
+  .hero-actions { flex-direction: column; align-items: center; }
+  .services-grid, .como-grid, .porq-grid, .dep-grid { grid-template-columns: 1fr; }
+}

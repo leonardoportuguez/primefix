@@ -1,0 +1,373 @@
+{% extends "base_admin.html" %}
+{% block title %}Dashboard — PrimeFix Admin{% endblock %}
+{% block page_title %}<i class="bi bi-speedometer2 me-2"></i>Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Cabeçalho da página -->
+<div class="page-header">
+  <div>
+    <h2>Dashboard</h2>
+    <p>Visão geral das ordens de serviço e do faturamento do mês</p>
+  </div>
+</div>
+
+<!-- CARDS DE RESUMO — números gerais do sistema -->
+<div class="row g-3 mb-4">
+
+  <!-- Total de OS cadastradas -->
+  <div class="col-6 col-lg-3 col-xl-2">
+    <div class="stat-card">
+      <div class="stat-icon icon-total"><i class="bi bi-clipboard-list"></i></div>
+      <div><div class="stat-val">{{ total_os or 0 }}</div><div class="stat-lbl">Total OS</div></div>
+    </div>
+  </div>
+
+  <!-- OS abertas sem técnico atribuído -->
+  <div class="col-6 col-lg-3 col-xl-2">
+    <div class="stat-card">
+      <div class="stat-icon icon-pendente"><i class="bi bi-hourglass-split"></i></div>
+      <div><div class="stat-val text-warning">{{ os_pendentes or 0 }}</div><div class="stat-lbl">Pendentes</div></div>
+    </div>
+  </div>
+
+  <!-- OS com status em_andamento -->
+  <div class="col-6 col-lg-3 col-xl-2">
+    <div class="stat-card">
+      <div class="stat-icon icon-execucao"><i class="bi bi-wrench-adjustable-circle"></i></div>
+      <div><div class="stat-val" style="color:#ea580c">{{ os_andamento or 0 }}</div><div class="stat-lbl">Em Execução</div></div>
+    </div>
+  </div>
+
+  <!-- OS finalizadas -->
+  <div class="col-6 col-lg-3 col-xl-2">
+    <div class="stat-card">
+      <div class="stat-icon icon-concluida"><i class="bi bi-check-circle"></i></div>
+      <div><div class="stat-val text-success">{{ os_finalizadas or 0 }}</div><div class="stat-lbl">Concluídas</div></div>
+    </div>
+  </div>
+
+  <!-- Faturamento do mês — soma dos valor_confirmado das OS finalizadas no mês -->
+  <div class="col-12 col-xl-4">
+    <div class="stat-card card-receita">
+      <div class="stat-icon icon-receita"><i class="bi bi-cash-stack"></i></div>
+      <div>
+        <div class="stat-val" style="font-size:1.4rem">R$ {{ "%.0f"|format(faturamento_mes or 0) }}</div>
+        <div class="stat-lbl">Faturamento do mês</div>
+               <!-- Divisão automática: percentuais vêm de taxa_empresa (Configurações) -->
+        <div class="d-flex gap-3 mt-1" style="font-size:.72rem">
+          <span style="color:#86efac">🏢 R$ {{ "%.0f"|format((faturamento_mes or 0)*(taxa_empresa/100)) }}</span>
+          <span style="color:#93c5fd">🔧 R$ {{ "%.0f"|format((faturamento_mes or 0)*(1-taxa_empresa/100)) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ALERTA — OS com valor sugerido pelo técnico aguardando aprovação do admin -->
+{% set aguardando = ordens|selectattr('valor_sugerido')|rejectattr('valor_confirmado')|list if ordens else [] %}
+{% if aguardando %}
+<div class="alert alert-warning border-0 rounded-3 d-flex align-items-center gap-2 mb-4">
+  <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+  <strong>{{ aguardando|length }} OS aguardando aprovação de valor.</strong>
+</div>
+{% endif %}
+
+<div class="row g-3">
+
+  <!-- TABELA PRINCIPAL DE OS -->
+  <div class="col-12 col-xl-8">
+    <div class="section-card">
+      <div class="sc-header">
+        <h6><i class="bi bi-clipboard-list me-2 text-primary"></i>Ordens de Serviço</h6>
+        <!-- Filtros inline: busca por cliente e filtro por status -->
+        <div class="d-flex gap-2 flex-wrap">
+          <input type="text" id="busca-os" class="form-control form-control-sm"
+                 placeholder="🔍 Buscar cliente..." style="width:160px" oninput="filtrarOS()">
+          <select id="filtro-status" class="form-select form-select-sm" style="width:130px" onchange="filtrarOS()">
+            <option value="">Todos</option>
+            <option value="aberta">🔴 Aberta</option>
+            <option value="atribuida">🔵 Atribuída</option>
+            <option value="em_andamento">🟣 Em Execução</option>
+            <option value="finalizada">🟢 Concluída</option>
+            <option value="cancelada">⚫ Cancelada</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover table-admin mb-0" id="tabela-os">
+          <thead>
+            <tr>
+              <th>OS</th>
+              <th>Cliente</th>
+              <th>Serviço</th>
+              <th>Status</th>
+              <th>Técnico</th>
+              <th>Valor</th>
+              <th>Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for os in ordens %}
+            <!-- data-status e data-cliente usados pelo filtro JS abaixo -->
+            <tr data-status="{{ os.status }}" data-cliente="{{ os.cliente_nome|lower }}">
+
+              <td><span class="fw-bold text-primary">#{{ os.id }}</span></td>
+
+                           <td>
+                <div class="fw-semibold" style="font-size:.87rem">{{ os.cliente_nome }}</div>
+                {% if os.bairro %}
+                  <span class="d-inline-flex align-items-center gap-1 mt-1"
+                        style="font-size:.71rem;color:#2563eb;background:var(--azul-claro);
+                               padding:1px 8px;border-radius:20px;font-weight:600">
+                    <i class="bi bi-geo-alt-fill" style="font-size:.65rem"></i>{{ os.bairro }}
+                  </span>
+                {% endif %}
+              </td>
+
+              <td style="font-size:.87rem">{{ os.categoria_nome }}</td>
+
+              <!-- Badge de status com bolinha colorida -->
+              <td>
+                {% if os.status == 'aberta' %}
+                  <span class="status-badge bs-aberta"><span class="status-dot" style="background:#ef4444"></span>Aberta</span>
+                {% elif os.status == 'atribuida' %}
+                  <span class="status-badge bs-atribuida"><span class="status-dot" style="background:#3b82f6"></span>Atribuída</span>
+                {% elif os.status == 'em_andamento' %}
+                  <span class="status-badge bs-andamento"><span class="status-dot" style="background:#8b5cf6"></span>Em Execução</span>
+                {% elif os.status == 'finalizada' %}
+                  <span class="status-badge bs-concluida"><span class="status-dot" style="background:#22c55e"></span>Concluída</span>
+                {% else %}
+                  <span class="status-badge bs-cancelada"><span class="status-dot" style="background:#9ca3af"></span>Cancelada</span>
+                {% endif %}
+              </td>
+
+              <td style="font-size:.85rem">{{ os.tecnico_nome or '—' }}</td>
+
+              <!-- Valor: mostra confirmado (verde), pendente (badge amarelo) ou traço -->
+              <td>
+                {% if os.valor_confirmado %}
+                  <span class="fw-bold text-success" style="font-size:.87rem">R$ {{ "%.2f"|format(os.valor_confirmado) }}</span>
+                {% elif os.valor_sugerido %}
+                  <span class="badge bg-warning text-dark" style="font-size:.7rem">Pendente</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+
+              <td style="font-size:.78rem;color:#6b7280">
+                {% if os.data_agendamento %}
+                  {{ os.data_agendamento.strftime('%d/%m %H:%M') }}
+                {% else %}—{% endif %}
+              </td>
+
+              <!-- BOTÕES DE AÇÃO por situação da OS -->
+              <td>
+                <div class="d-flex gap-1 flex-wrap">
+
+                  <!-- Ver detalhes — sempre disponível -->
+                  <a href="/admin/os/{{ os.id }}" class="btn-acao btn-ver" title="Ver detalhes">
+                    <i class="bi bi-eye"></i>
+                  </a>
+
+                  <!-- Atribuir técnico — só se ainda não tiver técnico -->
+                  {% if not os.tecnico_id %}
+                  <a href="/admin/assign/{{ os.id }}" class="btn-acao btn-atrib" title="Atribuir técnico">
+                    <i class="bi bi-person-check"></i>
+                  </a>
+                  {% endif %}
+
+                  <!-- Agendar visita — só se já tiver técnico atribuído -->
+                  {% if os.status == 'atribuida' %}
+                  <button class="btn-acao btn-editar" title="Agendar visita"
+                          onclick="abrirModalAgendar({{ os.id }})">
+                    <i class="bi bi-calendar-plus"></i>
+                  </button>
+                  {% endif %}
+
+                  <!-- Aprovar valor — só se técnico sugeriu e admin ainda não confirmou -->
+                  {% if os.valor_sugerido and not os.valor_confirmado %}
+                  <button class="btn-acao" style="background:#fde68a;color:#92400e" title="Aprovar valor"
+                          onclick="abrirModalValor({{ os.id }}, {{ os.valor_sugerido }})">
+                    <i class="bi bi-cash-coin"></i>
+                  </button>
+                  {% endif %}
+
+                  <!-- Finalizar OS — só se tiver valor confirmado e não estiver finalizada -->
+                  {% if os.valor_confirmado and os.status not in ['finalizada','cancelada'] %}
+                  <form action="/admin/finish/{{ os.id }}" method="POST" style="display:inline"
+                        onsubmit="return confirm('Finalizar OS #{{ os.id }}?')">
+                    <button type="submit" class="btn-acao btn-fin" title="Finalizar OS">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+
+                </div>
+              </td>
+
+            </tr>
+            {% else %}
+                        <tr><td colspan="8">
+              <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <p>Nenhuma OS cadastrada ainda.</p>
+              </div>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLUNA LATERAL — financeiro e atividades recentes -->
+  <div class="col-12 col-xl-4">
+
+    <!-- Resumo financeiro do mês -->
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-cash-stack me-2 text-success"></i>Financeiro — Mês Atual</h6>
+        <a href="/admin/financeiro" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem">Ver tudo</a>
+      </div>
+           <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+        <span style="font-size:.85rem;color:#6b7280">🏢 Empresa ({{ taxa_empresa|int }}%)</span>
+        <span class="fw-bold text-primary">R$ {{ "%.2f"|format((faturamento_mes or 0)*(taxa_empresa/100)) }}</span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+        <span style="font-size:.85rem;color:#6b7280">🔧 Repasse Técnicos ({{ (100-taxa_empresa)|int }}%)</span>
+        <span class="fw-bold text-success">R$ {{ "%.2f"|format((faturamento_mes or 0)*(1-taxa_empresa/100)) }}</span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center px-3 py-2">
+        <span style="font-size:.85rem;color:#6b7280">✅ OS Finalizadas</span>
+        <span class="fw-bold">{{ os_finalizadas or 0 }}</span>
+      </div>
+    </div>
+
+    <!-- Feed das últimas OS criadas -->
+    <div class="section-card">
+      <div class="sc-header">
+        <h6><i class="bi bi-activity me-2 text-primary"></i>Últimas Atividades</h6>
+      </div>
+      <div>
+        {% for os in (ordens or [])[:6] %}
+        <div class="atividade-item">
+          <div class="ativ-icon" style="background:#dbeafe;color:#2563eb">
+            <i class="bi bi-clipboard-check"></i>
+          </div>
+          <div>
+            <div class="ativ-texto">OS #{{ os.id }} — {{ os.categoria_nome }}</div>
+            <div class="ativ-tempo">{{ os.cliente_nome }}</div>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-3" style="font-size:.85rem">Sem atividades recentes</div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL AGENDAR VISITA
+     Abre ao clicar no botão de calendário na tabela
+     A action do form é definida dinamicamente pelo JS -->
+<div class="modal fade" id="modalAgendar" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-bold"><i class="bi bi-calendar-plus me-2 text-primary"></i>Agendar Visita</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formAgendar" method="POST">
+        <div class="modal-body">
+          <label class="form-label fw-semibold" style="font-size:.85rem">Data e hora</label>
+          <input type="datetime-local" name="data_agendamento" class="form-control" required>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">📅 Confirmar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL APROVAR VALOR
+     Abre ao clicar no botão de cifrão na tabela
+     Mostra preview da divisão 23%/77% em tempo real -->
+<div class="modal fade" id="modalValor" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-bold"><i class="bi bi-cash-coin me-2 text-warning"></i>Aprovar Valor</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formValor" method="POST">
+        <div class="modal-body">
+          <label class="form-label fw-semibold" style="font-size:.85rem">Valor confirmado (R$)</label>
+          <input type="number" id="inputValor" name="valor_confirmado"
+                 class="form-control" step="0.01" min="0" required>
+          <!-- Preview da divisão financeira atualizado pelo JS -->
+          <div class="mt-2 p-2 rounded" style="background:#f0fdf4;font-size:.78rem;color:#166534">
+            <div id="preview-empresa"></div>
+            <div id="preview-tecnico"></div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-success">✓ Confirmar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Filtra as linhas da tabela por texto do cliente e/ou status
+function filtrarOS(){
+  const busca  = document.getElementById('busca-os').value.toLowerCase();
+  const status = document.getElementById('filtro-status').value;
+  document.querySelectorAll('#tabela-os tbody tr[data-status]').forEach(tr => {
+    const clienteOk = !busca  || tr.dataset.cliente.includes(busca);
+    const statusOk  = !status || tr.dataset.status === status;
+    tr.style.display = (clienteOk && statusOk) ? '' : 'none';
+  });
+}
+
+// Abre modal de agendamento e define a rota correta no form
+function abrirModalAgendar(id){
+  document.getElementById('formAgendar').action = `/admin/agendar/${id}`;
+  new bootstrap.Modal(document.getElementById('modalAgendar')).show();
+}
+
+// Abre modal de valor, preenche com o valor sugerido e ativa preview
+function abrirModalValor(id, val){
+  document.getElementById('formValor').action = `/admin/confirmar-valor/${id}`;
+  const input = document.getElementById('inputValor');
+  input.value = val;
+  atualizarPreview(val);
+  input.oninput = () => atualizarPreview(parseFloat(input.value) || 0);
+  new bootstrap.Modal(document.getElementById('modalValor')).show();
+}
+
+// A porcentagem vem do backend via Jinja e é injetada aqui como
+// constante JS, pra não precisar duplicar o valor no HTML também
+const TAXA_EMPRESA = {{ taxa_empresa }};
+
+// Atualiza o preview de divisão empresa/técnico enquanto o admin digita o valor
+function atualizarPreview(val){
+  const empresa = TAXA_EMPRESA / 100;
+  const tecnico = 1 - empresa;
+  document.getElementById('preview-empresa').textContent =
+    `🏢 Empresa (${TAXA_EMPRESA}%): R$ ${(val * empresa).toFixed(2)}`;
+  document.getElementById('preview-tecnico').textContent =
+    `🔧 Técnico (${(100 - TAXA_EMPRESA)}%): R$ ${(val * tecnico).toFixed(2)}`;
+}
+</script>
+{% endblock %}

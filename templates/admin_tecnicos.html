@@ -1,0 +1,432 @@
+{% extends "base_admin.html" %}
+{% block title %}Técnicos — PrimeFix Admin{% endblock %}
+{% block page_title %}<i class="bi bi-person-badge me-2"></i>Técnicos{% endblock %}
+
+{% block content %}
+
+<!-- Card principal — mesmo padrão visual (section-card) usado em Categorias -->
+<div class="section-card">
+
+  <!-- Cabeçalho do card -->
+  <div class="sc-header">
+   <h6><i class="bi bi-person-badge me-2 text-primary"></i>Técnicos Cadastrados</h6>
+{% if tecnicos_pendentes %}
+  <span class="badge bg-warning text-dark ms-2">
+    {{ tecnicos_pendentes|length }} pendente(s)
+  </span>
+{% endif %}
+  </div>
+
+  <!-- Tabela responsiva -->
+  <div class="table-responsive">
+    <table class="table table-hover table-admin mb-0">
+
+          <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Telefone</th>
+          <th>Status</th>
+          <th>Habilidades</th>
+       <th>Aprovação</th>
+<th>Ações</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- Percorre a lista "tecnicos" enviada pela rota admin.tecnicos() -->
+        {% for tec in tecnicos %}
+        <tr>
+          <td>{{ tec.nome }}</td>
+          <td>{{ tec.email }}</td>
+          <td>{{ tec.telefone or "—" }}</td>
+          <td>
+            <!-- Badge colorido conforme o status do técnico -->
+            {% if tec.status == 'disponivel' %}
+              <span class="badge bg-success">Disponível</span>
+            {% elif tec.status == 'ocupado' %}
+              <span class="badge bg-warning text-dark">Ocupado</span>
+            {% else %}
+              <span class="badge bg-secondary">Inativo</span>
+            {% endif %}
+          </td>
+                  <!-- Se o técnico não tiver categoria vinculada, mostra travessão -->
+          <td>{{ tec.categorias or "—" }}</td>
+     <td>
+  {# Verifica se o técnico ainda está aguardando aprovação do administrador #}
+  {% if tec.status_aprovacao == 'pendente' %}
+
+    {# Exibe o status "Pendente" visualmente para o administrador #}
+    <span class="badge bg-warning text-dark">
+      <i class="bi bi-hourglass-split me-1"></i>Pendente
+    </span>
+
+    {# Verifica se existe um prazo de análise cadastrado para o técnico #}
+    {% if tec.prazo_analise %}
+
+      {# Exibe o prazo de análise formatado como dia/mês/ano e hora/minuto #}
+      <div class="small text-muted mt-1">
+        Prazo: {{ tec.prazo_analise.strftime('%d/%m/%Y %H:%M') }}
+      </div>
+
+    {% endif %}
+
+  {# Verifica se o técnico já foi aprovado pelo administrador #}
+  {% elif tec.status_aprovacao == 'aprovado' %}
+
+    {# Exibe o status "Aprovado" visualmente #}
+    <span class="badge bg-success">
+      <i class="bi bi-check-circle me-1"></i>Aprovado
+    </span>
+
+  {# Verifica se o cadastro do técnico foi recusado pelo administrador #}
+  {% elif tec.status_aprovacao == 'recusado' %}
+
+    {# Exibe o status "Recusado" visualmente #}
+    <span class="badge bg-danger">
+      <i class="bi bi-x-circle me-1"></i>Recusado
+    </span>
+
+  {# Caso o status não seja nenhum dos valores esperados, exibe um traço #}
+  {% else %}
+
+    <span class="badge bg-secondary">—</span>
+
+  {% endif %}
+</td>
+<td>
+
+  {% if tec.status_aprovacao == 'pendente' %}
+<!-- BOTÃO VER CADASTRO -->
+<!-- Abre uma janela com os dados completos do técnico
+     para o administrador analisar antes de tomar uma decisão. -->
+<button type="button"
+        class="btn btn-sm btn-outline-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#verTec{{ tec.id }}"
+        title="Ver cadastro">
+  <i class="bi bi-eye"></i>
+</button>
+    <!-- APROVAR -->
+    <form action="{{ url_for('admin.tecnico_aprovar', technician_id=tec.id) }}"
+          method="POST"
+          class="d-inline"
+          onsubmit="return confirm('Aprovar {{ tec.nome }} como técnico parceiro?');">
+
+      <button type="submit"
+              class="btn btn-sm btn-outline-success"
+              title="Aprovar técnico">
+        <i class="bi bi-check-lg"></i>
+      </button>
+
+    </form>
+
+    <!-- RECUSAR -->
+    <button type="button"
+            class="btn btn-sm btn-outline-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#recusarTec{{ tec.id }}"
+            title="Recusar técnico">
+      <i class="bi bi-x-lg"></i>
+    </button>
+
+  {% endif %}
+
+    <!-- EXCLUIR -->
+  <button type="button"
+          class="btn btn-sm btn-outline-danger"
+          data-bs-toggle="modal"
+          data-bs-target="#excluirTec{{ tec.id }}"
+          title="Excluir técnico">
+    <i class="bi bi-trash"></i>
+  </button>
+
+</td>
+</tr>
+
+        <!-- Modal de visualização completa do cadastro do técnico -->
+<div class="modal fade" id="verTec{{ tec.id }}" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-person-vcard me-2 text-primary"></i>
+          Cadastro do Técnico
+        </h5>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Exibe a foto do técnico quando existir -->
+        {% if tec.foto_perfil %}
+          <div class="text-center mb-4">
+            <img src="{{ tec.foto_perfil }}"
+                 alt="Foto de {{ tec.nome }}"
+                 class="rounded-circle"
+                 style="width: 100px; height: 100px; object-fit: cover;">
+          </div>
+        {% endif %}
+
+        <!-- Informações básicas do técnico -->
+        <h6 class="border-bottom pb-2 mb-3">
+          <i class="bi bi-person me-2"></i>Dados pessoais
+        </h6>
+
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <strong>Nome:</strong>
+            <div>{{ tec.nome or "—" }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <strong>E-mail:</strong>
+            <div>{{ tec.email or "—" }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <strong>Telefone:</strong>
+            <div>{{ tec.telefone or "—" }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <strong>CPF:</strong>
+            <div>{{ tec.cpf or "—" }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <strong>Data de nascimento:</strong>
+            <div>
+              {% if tec.data_nascimento %}
+                {{ tec.data_nascimento.strftime('%d/%m/%Y') }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Endereço informado pelo técnico -->
+        <h6 class="border-bottom pb-2 mb-3 mt-4">
+          <i class="bi bi-geo-alt me-2"></i>Endereço
+        </h6>
+
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <strong>Endereço:</strong>
+            <div>{{ tec.endereco or "—" }}</div>
+          </div>
+
+          <div class="col-md-3">
+            <strong>Bairro:</strong>
+            <div>{{ tec.bairro or "—" }}</div>
+          </div>
+
+          <div class="col-md-3">
+            <strong>Cidade:</strong>
+            <div>{{ tec.cidade or "—" }}</div>
+          </div>
+
+        </div>
+
+        <!-- Habilidades e categorias cadastradas -->
+        <h6 class="border-bottom pb-2 mb-3 mt-4">
+          <i class="bi bi-tools me-2"></i>Atuação profissional
+        </h6>
+
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <strong>Habilidades:</strong>
+            <div>{{ tec.habilidades or "—" }}</div>
+          </div>
+
+          <div class="col-md-6">
+            <strong>Categorias:</strong>
+            <div>{{ tec.categorias or "—" }}</div>
+          </div>
+
+        </div>
+
+        <!-- Informações de pagamento do técnico -->
+        <h6 class="border-bottom pb-2 mb-3 mt-4">
+          <i class="bi bi-credit-card me-2"></i>Pagamento
+        </h6>
+
+        <div>
+          <strong>Chave PIX:</strong>
+          <div>{{ tec.chave_pix or "—" }}</div>
+        </div>
+
+        <!-- Situação da análise administrativa -->
+        <h6 class="border-bottom pb-2 mb-3 mt-4">
+          <i class="bi bi-clipboard-check me-2"></i>Análise administrativa
+        </h6>
+
+        <div class="row g-3">
+
+          <div class="col-md-4">
+            <strong>Status:</strong>
+            <div>{{ tec.status or "—" }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <strong>Aprovação:</strong>
+            <div>{{ tec.status_aprovacao or "—" }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <strong>Prazo de análise:</strong>
+            <div>
+              {% if tec.prazo_analise %}
+                {{ tec.prazo_analise.strftime('%d/%m/%Y %H:%M') }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Mostra quando a análise já foi realizada -->
+          {% if tec.data_analise %}
+            <div class="col-md-6">
+              <strong>Data da análise:</strong>
+              <div>{{ tec.data_analise.strftime('%d/%m/%Y %H:%M') }}</div>
+            </div>
+          {% endif %}
+
+          <!-- Mostra o motivo somente quando houver uma recusa registrada -->
+          {% if tec.motivo_recusa %}
+            <div class="col-12">
+              <strong>Motivo da recusa:</strong>
+              <div class="text-danger">{{ tec.motivo_recusa }}</div>
+            </div>
+          {% endif %}
+
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+
+        <button type="button"
+                class="btn btn-secondary btn-sm"
+                data-bs-dismiss="modal">
+          Fechar
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal de recusa do técnico -->
+<div class="modal fade" id="recusarTec{{ tec.id }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <form action="{{ url_for('admin.tecnico_recusar', technician_id=tec.id) }}"
+            method="POST">
+
+        <div class="modal-header">
+          <h6 class="modal-title">
+            <i class="bi bi-x-circle text-danger me-2"></i>
+            Recusar Técnico
+          </h6>
+
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <p>
+            Você está recusando o cadastro de
+            <strong>{{ tec.nome }}</strong>.
+          </p>
+
+          <label class="form-label fw-semibold">
+            Motivo da recusa
+          </label>
+
+          <textarea name="motivo_recusa"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Informe o motivo da recusa..."
+                    required></textarea>
+
+          <div class="form-text">
+            O motivo poderá ser apresentado ao técnico posteriormente.
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+
+          <button type="button"
+                  class="btn btn-secondary btn-sm"
+                  data-bs-dismiss="modal">
+            Cancelar
+          </button>
+
+          <button type="submit"
+                  class="btn btn-danger btn-sm">
+            <i class="bi bi-x-circle me-1"></i>
+            Confirmar Recusa
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+        <!-- Modal de confirmação — pede motivo antes de excluir -->
+        <div class="modal fade" id="excluirTec{{ tec.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form action="{{ url_for('admin.tecnico_excluir', technician_id=tec.id) }}" method="POST">
+                <div class="modal-header">
+                  <h6 class="modal-title">Excluir Técnico</h6>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Excluir <strong>{{ tec.nome }}</strong>? OS ativas dele voltam
+                     para "aberta" sem técnico.</p>
+                  <label class="form-label">Motivo (opcional)</label>
+                  <input type="text" name="motivo" class="form-control">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <!-- Só aparece se a lista "tecnicos" vier vazia -->
+        <tr>
+                  <td colspan="7" class="text-center text-muted py-4">
+  Nenhum técnico cadastrado.
+</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+  </div>
+</div>
+
+{% endblock %}

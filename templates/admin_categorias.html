@@ -1,0 +1,262 @@
+{% extends "base_admin.html" %}
+{% block title %}Categorias — PrimeFix Admin{% endblock %}
+{% block page_title %}<i class="bi bi-grid me-2"></i>Categorias{% endblock %}
+
+{% block content %}
+
+<!-- Cabeçalho da página -->
+<div class="page-header">
+  <div>
+    <h2>Categorias</h2>
+    <p>Organize os tipos de serviço oferecidos na plataforma</p>
+  </div>
+</div>
+
+<!-- Card com o formulário de criação de nova categoria -->
+<div class="section-card mb-3">
+  <div class="sc-header">
+    <h6><i class="bi bi-plus-circle me-2 text-success"></i>Nova Categoria</h6>
+  </div>
+  <div class="p-3">
+    <!-- action aponta pra rota categoria_criar que criamos no admin.py -->
+    <form action="{{ url_for('admin.categoria_criar') }}" method="POST" class="row g-2">
+
+      <!-- Campo nome — obrigatório (atributo "required" do HTML) -->
+      <div class="col-12 col-md-4">
+        <input type="text" name="nome" class="form-control"
+               placeholder="Nome da categoria" required>
+      </div>
+
+      <!-- Campo descrição — opcional -->
+      <div class="col-12 col-md-6">
+        <input type="text" name="descricao" class="form-control"
+               placeholder="Descrição (opcional)">
+      </div>
+
+      <!-- Botão de envio -->
+      <div class="col-12 col-md-2">
+        <button type="submit" class="btn btn-success w-100">
+          <i class="bi bi-check-lg me-1"></i>Criar
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Card principal da página — mesmo padrão visual (section-card)
+     já usado no dashboard, pra manter a identidade do sistema -->
+<div class="section-card">
+
+  <!-- Cabeçalho do card, com ícone e título -->
+  <div class="sc-header">
+    <h6><i class="bi bi-grid me-2 text-primary"></i>Categorias de Serviço</h6>
+  </div>
+
+  <!-- Tabela responsiva (rola horizontalmente em telas pequenas) -->
+  <div class="table-responsive">
+    <table class="table table-hover table-admin mb-0">
+
+      <!-- Cabeçalho das colunas -->
+            <thead>
+        <tr>
+          <th style="width:40px"></th>
+          <th>Nome</th>
+          <th>Descrição</th>
+          <th>Técnicos vinculados</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Percorre a lista "categorias" que a rota admin.categorias()
+             enviou pro template, criando uma linha <tr> pra cada uma -->
+              {% for cat in categorias %}
+        <!-- draggable="true" permite arrastar essa linha; data-id guarda
+             o ID da categoria, usado pelo JavaScript pra saber a ordem
+             final depois que o usuário solta a linha em outro lugar -->
+        <tr class="categoria-linha" draggable="true" data-id="{{ cat.id }}">
+          <td class="text-muted" style="cursor:grab" title="Arraste para reordenar">
+            <i class="bi bi-grip-vertical"></i>
+          </td>
+          <td>{{ cat.nome }}</td>
+          <!-- Se descricao estiver vazia (None), mostra um travessão -->
+          <td>{{ cat.descricao or "—" }}</td>
+                   <td>
+            <span class="d-inline-flex align-items-center gap-1"
+                  style="font-size:.75rem;color:#2563eb;background:var(--azul-claro);
+                         padding:2px 10px;border-radius:20px;font-weight:700">
+              <i class="bi bi-person-fill" style="font-size:.7rem"></i>{{ cat.total_tecnicos }}
+            </span>
+          </td>
+          <td>
+            <!-- Botão Editar: abre o modal de edição da categoria atual.
+                 O {{ cat.id }} identifica qual categoria será editada -->
+            <button type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editarCategoria{{ cat.id }}"
+                    title="Editar categoria">
+              <i class="bi bi-pencil"></i>
+            </button>
+
+            <!-- Botão Excluir: abre o modal de confirmação da exclusão.
+                 A exclusão é processada pela rota admin.categoria_excluir -->
+            <button type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    data-bs-toggle="modal"
+                    data-bs-target="#excluirCategoria{{ cat.id }}"
+                    title="Excluir categoria">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <!-- Modal de edição — um pra cada categoria, identificado pelo ID dela -->
+        <div class="modal fade" id="editarCategoria{{ cat.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <!-- action aponta pra rota categoria_editar, já enviando o ID desta categoria -->
+              <form action="{{ url_for('admin.categoria_editar', categoria_id=cat.id) }}" method="POST">
+                <div class="modal-header">
+                  <h6 class="modal-title">Editar Categoria</h6>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <label class="form-label">Nome</label>
+                  <!-- value já vem preenchido com o nome atual -->
+                  <input type="text" name="nome" class="form-control mb-2"
+                         value="{{ cat.nome }}" required>
+                  <label class="form-label">Descrição</label>
+                  <input type="text" name="descricao" class="form-control"
+                         value="{{ cat.descricao or '' }}">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-success btn-sm">Salvar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de confirmação de exclusão — um pra cada categoria -->
+        <div class="modal fade" id="excluirCategoria{{ cat.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <!-- action aponta pra rota categoria_excluir, enviando o ID desta categoria -->
+              <form action="{{ url_for('admin.categoria_excluir', categoria_id=cat.id) }}" method="POST">
+                <div class="modal-header">
+                  <h6 class="modal-title">Excluir Categoria</h6>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Tem certeza que deseja excluir a categoria <strong>{{ cat.nome }}</strong>?</p>
+                  <p class="text-muted small mb-0">Essa ação não pode ser desfeita. Categorias com técnicos vinculados não podem ser excluídas.</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {% else %}
+        <!-- Bloco "else" do for: só é exibido se a lista "categorias" vier vazia -->
+               <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <i class="bi bi-grid"></i>
+              <p>Nenhuma categoria cadastrada.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+  </div>
+</div>
+
+<!-- Estilo simples pra dar feedback visual durante o arrastar -->
+<style>
+  tr.categoria-linha.arrastando {
+    opacity: 0.4;
+  }
+</style>
+
+<script>
+// ============================================================
+// ARRASTAR E SOLTAR PARA REORDENAR CATEGORIAS
+// Usa a API nativa de Drag and Drop do navegador (HTML5), sem
+// biblioteca externa. Guarda qual linha está sendo arrastada numa
+// variável, e a cada "dragover" decide se ela deve entrar antes ou
+// depois da linha que está embaixo do mouse.
+// ============================================================
+
+let linhaArrastada = null; // guarda a linha <tr> que o usuário está arrastando
+
+// Pega todas as linhas de categoria (cada uma tem a classe categoria-linha)
+document.querySelectorAll('tr.categoria-linha').forEach(linha => {
+
+    // Disparado quando o usuário começa a arrastar essa linha
+    linha.addEventListener('dragstart', () => {
+        linhaArrastada = linha;
+        linha.classList.add('arrastando'); // aplica o efeito visual (opacidade)
+    });
+
+    // Disparado quando o usuário solta a linha (em qualquer lugar)
+    linha.addEventListener('dragend', () => {
+        linha.classList.remove('arrastando');
+        linhaArrastada = null;
+        salvarNovaOrdem(); // manda a nova ordem pro backend assim que solta
+    });
+
+    // Disparado continuamente enquanto uma linha é arrastada por cima
+    // desta. preventDefault() é obrigatório aqui, senão o navegador
+    // não permite soltar (comportamento padrão do HTML5 drag and drop)
+    linha.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!linhaArrastada || linhaArrastada === linha) return;
+
+        // Calcula o meio (verticalmente) da linha que está sob o mouse.
+        // Se o mouse está na metade de cima, insere a linha arrastada
+        // ANTES dela; se está na metade de baixo, insere DEPOIS — isso
+        // dá a sensação natural de "empurrar" as outras linhas
+        const posicao = linha.getBoundingClientRect();
+        const meio = posicao.top + posicao.height / 2;
+
+        if (e.clientY < meio) {
+            linha.parentNode.insertBefore(linhaArrastada, linha);
+        } else {
+            linha.parentNode.insertBefore(linhaArrastada, linha.nextSibling);
+        }
+    });
+});
+
+// Lê a ordem atual das linhas na tela (depois do arrastar) e envia
+// pro backend salvar na coluna 'ordem' de cada categoria
+function salvarNovaOrdem(){
+    const ids = Array.from(document.querySelectorAll('tr.categoria-linha'))
+                      .map(linha => linha.dataset.id);
+
+    fetch("{{ url_for('admin.categoria_reordenar') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: ids })
+    })
+    .catch(erro => console.error("Erro ao salvar nova ordem:", erro));
+}
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+

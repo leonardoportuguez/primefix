@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Nova Senha — PrimeFix{% endblock %}
+
+{% block content %}
+
+<!-- Card centralizado, mesmo padrão visual dos outros formulários -->
+<div class="row justify-content-center mt-4">
+  <div class="col-12 col-md-5">
+    <div class="card border-0 shadow-sm p-4">
+
+      <h5 class="fw-bold mb-3">Criar nova senha</h5>
+
+      <!-- Formulário de redefinição. O POST vai pra rota
+           redefinir_senha(token) em app.py, que já validou (antes
+           de renderizar esta página) que o token existe, não expirou
+           e não foi usado. O {{ token }} não aparece na tela — ele
+           só faz parte da URL (/redefinir-senha/<token>), então não
+           precisa de campo hidden aqui -->
+      <form method="POST">
+
+               <label class="form-label">Nova senha</label>
+        <!--
+          Campo de senha com botão de "olho" ao lado, pra alternar
+          entre texto oculto (••••) e visível, ajudando o usuário
+          a conferir se digitou certo antes de enviar o formulário.
+
+          - O <div class="input-group"> é uma classe do Bootstrap
+            que junta visualmente o <input> e o <button> num só
+            bloco, como se fossem uma coisa só na tela
+          - O id="senha" é usado pelo JavaScript (função
+            alternarSenha, lá embaixo) pra encontrar esse campo
+            específico e trocar seu tipo
+          - tabindex="-1" no botão evita que o "Tab" do teclado
+            pare nele ao navegar pelo formulário — assim o usuário
+            vai direto de um campo de senha pro próximo, sem parar
+            no botão do olho sem querer
+        -->
+        <div class="input-group mb-3">
+          <input type="password" name="senha" id="senha" class="form-control"
+                 required minlength="6">
+          <button type="button" class="btn btn-outline-secondary"
+                  onclick="alternarSenha('senha', this)" tabindex="-1">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
+
+        <label class="form-label">Confirmar nova senha</label>
+        <!--
+          Mesmo padrão do campo acima, mas pro campo de confirmação.
+          Cada campo tem seu próprio botão e seu próprio id
+          ("confirmar_senha"), pra poder ser mostrado/ocultado de
+          forma independente do campo "Nova senha"
+        -->
+        <div class="input-group mb-3">
+          <input type="password" name="confirmar_senha" id="confirmar_senha" class="form-control"
+                 required minlength="6">
+          <button type="button" class="btn btn-outline-secondary"
+                  onclick="alternarSenha('confirmar_senha', this)" tabindex="-1">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
+
+        <!-- A conferência de que as duas senhas são iguais acontece
+             no back-end (rota redefinir_senha em app.py) -->
+        <button type="submit" class="btn btn-primary w-100">
+          Redefinir senha
+        </button>
+
+       </form>
+
+    </div>
+  </div>
+</div>
+
+<!--
+  Script: alternarSenha
+  ----------------------
+  Objetivo: mostrar ou ocultar o texto digitado num campo de senha,
+  trocando também o ícone do "olho" pra indicar o estado atual.
+
+  Como funciona, passo a passo:
+    1. É chamado pelo atributo onclick="alternarSenha('id_do_campo', this)"
+       de cada botão — "this" é o próprio botão que foi clicado
+    2. Recebe dois parâmetros:
+         - inputId: o id do campo de senha que deve ser alterado
+                    (ex: "senha" ou "confirmar_senha")
+         - botao:   o elemento HTML do botão que o usuário clicou,
+                    usado pra encontrar e trocar o ícone dentro dele
+    3. Busca o campo de senha correspondente usando o id recebido
+    4. Busca o ícone (<i>) que está dentro do botão clicado
+    5. Verifica o tipo atual do campo:
+         - Se está como "password" (texto oculto, aparece ••••),
+           troca pra "text" (mostra o texto normalmente) e troca
+           o ícone de "olho aberto" pra "olho fechado/riscado"
+         - Se já está como "text" (visível), faz o processo
+           inverso: volta pra "password" e troca o ícone de volta
+           pra "olho aberto"
+
+  Reutilizável: essa mesma função serve pra qualquer campo de senha
+  da tela, bastando passar o id certo — por isso os dois botões
+  (Nova senha e Confirmar nova senha) chamam a mesma função, só
+  com parâmetros diferentes.
+-->
+<script>
+function alternarSenha(inputId, botao) {
+  // Localiza o campo <input> de senha pelo id recebido como parâmetro
+  const input = document.getElementById(inputId);
+
+  // Localiza o ícone <i> (Bootstrap Icons) que está dentro do
+  // botão que disparou o clique
+  const icone = botao.querySelector('i');
+
+  // Se o campo está atualmente oculto (tipo "password")...
+  if (input.type === 'password') {
+    // ...muda o tipo do campo pra "text", revelando o que foi digitado
+    input.type = 'text';
+
+    // Troca o ícone: remove o "olho aberto" e coloca o
+    // "olho riscado", indicando visualmente que a senha
+    // está sendo exibida
+    icone.classList.remove('bi-eye');
+    icone.classList.add('bi-eye-slash');
+  } else {
+    // Caso contrário (o campo já está visível como "text")...
+    // ...volta o tipo do campo pra "password", ocultando de novo
+    input.type = 'password';
+
+    // Troca o ícone de volta: remove o "olho riscado" e
+    // coloca o "olho aberto" normal
+    icone.classList.remove('bi-eye-slash');
+    icone.classList.add('bi-eye');
+  }
+}
+</script>
+
+{% endblock %}

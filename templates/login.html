@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}PrimeFix - Login{% endblock %}
+
+{% block content %}
+<!-- login-wrap centraliza o card de login na tela toda (horizontal e
+     vertical). Só afeta essa página — não mexe no .form-section usado
+     em outros formulários do site (criar OS, editar perfil, etc) -->
+<div class="login-wrap">
+<section class="form-section login-card">
+    <h2>Entrar</h2>
+    <form method="POST" action="{{ url_for('login') }}">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="senha">Senha</label>
+        <!-- Campo de senha + botão de olho pra mostrar/ocultar o texto digitado.
+             O input-group do Bootstrap junta o campo e o botão visualmente -->
+        <div class="input-group">
+          <input type="password" id="senha" name="senha" class="form-control" required>
+          <button type="button" class="btn btn-outline-secondary"
+                  onclick="alternarSenha('senha', this)" tabindex="-1">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
+
+        <!-- mt-4 afasta o botão do campo de senha (era colado antes) -->
+        <button type="submit" class="btn btn-primary w-100 mt-4">Entrar</button>
+    </form>
+
+    <!-- Link pra recuperação de senha, logo abaixo do formulário de login -->
+    <a href="{{ url_for('esqueci_senha') }}" class="d-block text-center mt-3" style="font-size:.85rem">
+        Esqueci minha senha
+    </a>
+
+    <p class="text-center mt-2">Não tem conta? <a href="{{ url_for('cadastro') }}">Cadastre-se</a></p>
+</section>
+</div>
+
+<!-- Script reutilizável: alterna o campo de senha entre "password"
+     (oculto) e "text" (visível), trocando também o ícone do olho.
+     Recebe o id do input e o próprio botão clicado -->
+<script>
+function alternarSenha(inputId, botao) {
+  const input = document.getElementById(inputId);
+  const icone = botao.querySelector('i');
+
+  if (input.type === 'password') {
+    input.type = 'text';
+    icone.classList.remove('bi-eye');
+    icone.classList.add('bi-eye-slash');
+  } else {
+    input.type = 'password';
+    icone.classList.remove('bi-eye-slash');
+    icone.classList.add('bi-eye');
+  }
+}
+</script>
+{% endblock %}

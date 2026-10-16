@@ -1,0 +1,309 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Desempenho dos Técnicos — PrimeFix Admin{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-bar-chart-line me-2"></i>
+Desempenho dos Técnicos
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     FILTRO DE PERÍODO
+     ============================================================ -->
+<div class="section-card mb-4">
+
+  <div class="sc-header">
+    <h6>
+      <i class="bi bi-calendar3 me-2 text-primary"></i>
+      Período da análise
+    </h6>
+  </div>
+
+  <div class="p-3">
+
+    <form method="GET" action="{{ url_for('admin.relatorios') }}">
+
+      <div class="row g-3 align-items-end">
+
+        <div class="col-md-4">
+
+          <label class="form-label fw-semibold">
+            Período
+          </label>
+
+          <select name="periodo"
+                  id="periodo"
+                  class="form-select"
+                  onchange="mostrarDatas()">
+
+            <option value="semana"
+              {% if periodo == 'semana' %}selected{% endif %}>
+              Esta semana
+            </option>
+
+            <option value="mes"
+              {% if periodo == 'mes' %}selected{% endif %}>
+              Este mês
+            </option>
+
+            <option value="ano"
+              {% if periodo == 'ano' %}selected{% endif %}>
+              Este ano
+            </option>
+
+            <option value="personalizado"
+              {% if periodo == 'personalizado' %}selected{% endif %}>
+              Personalizado
+            </option>
+
+          </select>
+
+        </div>
+
+        <div class="col-md-3" id="campoDataInicio">
+
+          <label class="form-label fw-semibold">
+            Data inicial
+          </label>
+
+          <input type="date"
+                 name="inicio"
+                 value="{{ inicio or '' }}"
+                 class="form-control">
+
+        </div>
+
+        <div class="col-md-3" id="campoDataFim">
+
+          <label class="form-label fw-semibold">
+            Data final
+          </label>
+
+          <input type="date"
+                 name="fim"
+                 value="{{ fim or '' }}"
+                 class="form-control">
+
+        </div>
+
+        <div class="col-md-2">
+
+          <button type="submit"
+                  class="btn btn-primary w-100">
+
+            <i class="bi bi-search me-1"></i>
+            Consultar
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     RESUMO GERAL
+     ============================================================ -->
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+      <div class="card-body">
+
+        <small class="text-muted">
+          Serviços realizados
+        </small>
+
+        <h4 class="fw-bold mt-1">
+          {{ total_servicos }}
+        </h4>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+      <div class="card-body">
+
+        <small class="text-muted">
+          Total movimentado
+        </small>
+
+        <h4 class="fw-bold mt-1">
+          R$ {{ "%.2f"|format(total_movimentado) }}
+        </h4>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="col-md-4">
+
+    <div class="card border-0 shadow-sm h-100">
+
+      <div class="card-body">
+
+        <small class="text-muted">
+          Repasse aos técnicos
+        </small>
+
+        <h4 class="fw-bold mt-1 text-success">
+          R$ {{ "%.2f"|format(total_repasse) }}
+        </h4>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     DESEMPENHO DOS TÉCNICOS
+     ============================================================ -->
+<div class="section-card">
+
+  <div class="sc-header">
+
+    <h6>
+      <i class="bi bi-person-lines-fill me-2 text-primary"></i>
+      Desempenho dos Técnicos
+    </h6>
+
+  </div>
+
+
+  <div class="table-responsive">
+
+    <table class="table table-hover table-admin mb-0">
+
+      <thead>
+
+        <tr>
+
+          <th>Posição</th>
+          <th>Técnico</th>
+          <th>Serviços</th>
+          <th>Total gerado</th>
+          <th>Repasse</th>
+          <th>PrimeFix</th>
+
+        </tr>
+
+      </thead>
+
+
+      <tbody>
+
+        {% for tec in tecnicos %}
+
+        <tr>
+
+          <td class="fw-bold">
+            {{ loop.index }}º
+          </td>
+
+          <td class="fw-bold">
+            {{ tec.nome }}
+          </td>
+
+          <td>
+            {{ tec.quantidade_os }}
+          </td>
+
+          <td>
+            R$ {{ "%.2f"|format(tec.total_servicos) }}
+          </td>
+
+          <td class="text-success fw-bold">
+            R$ {{ "%.2f"|format(tec.repasse_tecnico) }}
+          </td>
+
+          <td class="text-primary fw-bold">
+            R$ {{ "%.2f"|format(tec.receita_primefix) }}
+          </td>
+
+        </tr>
+
+        {% else %}
+
+        <tr>
+
+          <td colspan="6"
+              class="text-center text-muted py-4">
+
+            <i class="bi bi-clipboard-x"
+               style="font-size:2rem"></i>
+
+            <p class="mt-2 mb-0">
+              Nenhum serviço finalizado encontrado.
+            </p>
+
+          </td>
+
+        </tr>
+
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+
+<script>
+
+function mostrarDatas() {
+
+    const periodo = document.getElementById("periodo").value;
+
+    const inicio = document.getElementById("campoDataInicio");
+    const fim = document.getElementById("campoDataFim");
+
+    if (periodo === "personalizado") {
+
+        inicio.style.display = "block";
+        fim.style.display = "block";
+
+    } else {
+
+        inicio.style.display = "none";
+        fim.style.display = "none";
+
+    }
+
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    mostrarDatas();
+
+});
+
+</script>
+
+{% endblock %}

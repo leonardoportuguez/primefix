@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% block title %}PrimeFix — Minhas Solicitações{% endblock %}
+
+{% block content %}
+
+<!-- CABEÇALHO -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Olá, {{ session.nome.split()[0] }} 👋</h4>
+    <p class="text-muted mb-0" style="font-size:.9rem">Solicite um serviço ou acompanhe suas ordens</p>
+  </div>
+  {% if whatsapp %}
+  <a href="https://wa.me/{{ whatsapp }}" target="_blank"
+     class="btn-whatsapp" style="font-size:.85rem;padding:.5rem 1rem">
+    💬 WhatsApp
+  </a>
+  {% endif %}
+</div>
+
+<!-- FORMULÁRIO DE NOVA OS -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold" style="font-size:.95rem">
+    🔧 Nova Solicitação
+  </div>
+  <div class="card-body">
+    <form action="/cliente/criar-os" method="POST">
+
+      <!-- TIPO DE SOLICITAÇÃO -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold" style="font-size:.88rem">
+          Tipo de solicitação *
+        </label>
+        <div class="row g-2">
+
+          <!-- Orçamento Online — gratuito -->
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded border-2 border h-100"
+                 style="cursor:pointer;transition:all .2s"
+                 id="card-orcamento"
+                 onclick="selecionarTipo('orcamento_online')">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span style="font-size:1.4rem">💬</span>
+                <strong style="font-size:.92rem">Orçamento Online</strong>
+                <span class="badge bg-success ms-auto" style="font-size:.7rem">Gratuito</span>
+              </div>
+              <p style="font-size:.82rem;color:#6b7280;margin:0">
+                Descreva o problema e receba uma estimativa online sem custo.
+              </p>
+            </div>
+          </div>
+
+          <!-- Visita Técnica — R$ 110,00 -->
+          <div class="col-12 col-md-6">
+            <div class="p-3 rounded border-2 border h-100"
+                 style="cursor:pointer;transition:all .2s"
+                 id="card-visita"
+                 onclick="selecionarTipo('visita_tecnica')">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span style="font-size:1.4rem">🔧</span>
+                <strong style="font-size:.92rem">Visita Técnica</strong>
+                <span class="badge bg-warning text-dark ms-auto" style="font-size:.7rem">R$ 110,00</span>
+              </div>
+              <p style="font-size:.82rem;color:#6b7280;margin:0">
+                Técnico vai até você avaliar e apresentar o orçamento presencial.
+              </p>
+            </div>
+          </div>
+
+        </div>
+        <!-- Campo hidden que guarda o tipo selecionado -->
+        <input type="hidden" name="tipo_solicitacao" id="tipo_solicitacao" value="" required>
+
+        <!-- Aviso da visita técnica — aparece ao selecionar visita -->
+        <div id="aviso-visita" class="mt-2 p-2 rounded d-none"
+             style="background:#fef9c3;border:1px solid #fde047;font-size:.82rem;color:#92400e">
+          ⚠️ <strong>Atenção:</strong> A visita técnica custa <strong>R$ 110,00</strong>,
+          Pago à plataforma no dia da visita, independente de fechar o serviço. O repasse ao técnico é realizado pela PrimeFix.
+        </div>
+      </div>
+
+      <!-- TIPO DE SERVIÇO -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold" style="font-size:.88rem">
+          Tipo de serviço *
+        </label>
+        <select name="categoria_id" class="form-select" required>
+          <option value="">Selecione o serviço...</option>
+          {% for cat in categorias %}
+          <option value="{{ cat.id }}">{{ cat.icone }} {{ cat.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- DESCRIÇÃO DO PROBLEMA -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold" style="font-size:.88rem">
+          Descreva o problema *
+        </label>
+        <textarea name="descricao" class="form-control" rows="3"
+          placeholder="Ex: Torneira pingando, chuveiro sem pressão, tomada com faísca..."
+          required></textarea>
+      </div>
+
+      <!-- ENDEREÇO -->
+      <div class="fw-semibold mb-2 mt-3"
+           style="font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:#2563eb">
+        📍 Endereço do serviço
+      </div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold" style="font-size:.88rem">Cidade / Região *</label>
+          <select name="cidade" id="sel-cidade" class="form-select"
+                  required onchange="atualizarBairros()">
+            <option value="">Selecione...</option>
+            <optgroup label="Brasília">
+              <option value="Brasília - Asa Norte">Brasília — Asa Norte</option>
+              <option value="Brasília - Asa Sul">Brasília — Asa Sul</option>
+              <option value="Brasília - Lago Norte">Brasília — Lago Norte</option>
+              <option value="Brasília - Lago Sul">Brasília — Lago Sul</option>
+              <option value="Brasília - Noroeste">Brasília — Noroeste</option>
+              <option value="Brasília - Sudoeste">Brasília — Sudoeste</option>
+              <option value="Brasília - Octogonal">Brasília — Octogonal</option>
+              <option value="Brasília - Cruzeiro">Brasília — Cruzeiro</option>
+            </optgroup>
+            <optgroup label="Regiões Administrativas">
+              <option value="Águas Claras">Águas Claras</option>
+              <option value="Ceilândia">Ceilândia</option>
+              <option value="Gama">Gama</option>
+              <option value="Guará">Guará</option>
+              <option value="Planaltina">Planaltina</option>
+              <option value="Recanto das Emas">Recanto das Emas</option>
+              <option value="Samambaia">Samambaia</option>
+              <option value="Santa Maria">Santa Maria</option>
+              <option value="São Sebastião">São Sebastião</option>
+              <option value="Sobradinho">Sobradinho</option>
+              <option value="Taguatinga">Taguatinga</option>
+              <option value="Vicente Pires">Vicente Pires</option>
+              <option value="Park Way">Park Way</option>
+              <option value="Núcleo Bandeirante">Núcleo Bandeirante</option>
+              <option value="Riacho Fundo">Riacho Fundo</option>
+              <option value="Riacho Fundo II">Riacho Fundo II</option>
+              <option value="Itapoã">Itapoã</option>
+            </optgroup>
+            <optgroup label="Entorno / Goiás">
+              <option value="Valparaíso de Goiás">Valparaíso de Goiás</option>
+              <option value="Novo Gama">Novo Gama</option>
+              <option value="Luziânia">Luziânia</option>
+              <option value="Cidade Ocidental">Cidade Ocidental</option>
+              <option value="Águas Lindas de Goiás">Águas Lindas de Goiás</option>
+              <option value="Formosa">Formosa</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold" style="font-size:.88rem">Bairro / Quadra *</label>
+          <select name="bairro" id="sel-bairro" class="form-select" required>
+            <option value="">Selecione a cidade primeiro...</option>
+          </select>
+          <input type="text" id="bairro-manual" name="bairro_manual"
+                 class="form-control mt-1" placeholder="Digite o bairro..."
+                 style="display:none">
+        </div>
+      </div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-12 col-md-8">
+          <label class="form-label fw-semibold" style="font-size:.88rem">Rua / Quadra *</label>
+          <input type="text" name="logradouro" class="form-control"
+                 placeholder="Ex: SQN 210, Rua das Flores..." required maxlength="200">
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold" style="font-size:.88rem">Número</label>
+          <input type="text" name="numero" class="form-control"
+                 placeholder="Ex: 15, S/N" maxlength="20">
+        </div>
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold" style="font-size:.88rem">Complemento</label>
+          <input type="text" name="complemento" class="form-control"
+                 placeholder="Apto, Bloco, Casa..." maxlength="100">
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label fw-semibold" style="font-size:.88rem">Ponto de referência</label>
+          <input type="text" name="referencia" class="form-control"
+                 placeholder="Próximo ao mercado..." maxlength="200">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
+        📤 Enviar Solicitação
+      </button>
+
+    </form>
+  </div>
+</div>
+
+<!-- LISTA DE OS -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-bold" style="font-size:.95rem">📋 Minhas Solicitações</span>
+    {% if ordens %}<span class="badge bg-primary">{{ ordens|length }}</span>{% endif %}
+  </div>
+
+  {% if ordens %}
+  <div class="list-group list-group-flush">
+    {% for os in ordens %}
+    <div class="list-group-item border-start-0 border-end-0 py-3"
+         style="border-left:4px solid
+           {% if os.status=='aberta' %}#ef4444
+           {% elif os.status=='atribuida' %}#3b82f6
+           {% elif os.status=='em_andamento' %}#8b5cf6
+           {% elif os.status=='finalizada' %}#22c55e
+           {% else %}#9ca3af{% endif %} !important">
+
+      <div class="d-flex justify-content-between align-items-start mb-1">
+        <div>
+          <span class="text-muted" style="font-size:.78rem">#{{ os.id }}</span>
+          <span class="fw-semibold ms-2">{{ os.categoria_nome }}</span>
+          <!-- Badge tipo de solicitação -->
+          {% if os.tipo_solicitacao == 'visita_tecnica' %}
+          <span class="badge bg-warning text-dark ms-1" style="font-size:.68rem">🔧 Visita</span>
+          {% else %}
+          <span class="badge bg-success ms-1" style="font-size:.68rem">💬 Online</span>
+          {% endif %}
+        </div>
+        <span class="badge-{{ os.status }}">
+          {{ os.status|replace('_',' ')|title }}
+        </span>
+      </div>
+
+      <div style="font-size:.83rem;color:#555">
+        📍 {{ os.bairro }}{% if os.cidade %}, {{ os.cidade }}{% endif %}
+        {% if os.logradouro %} — {{ os.logradouro }}{% if os.numero %}, {{ os.numero }}{% endif %}{% endif %}
+      </div>
+
+      {% if os.descricao %}
+      <div class="text-muted mt-1"
+           style="font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+        {{ os.descricao }}
+      </div>
+      {% endif %}
+
+      <div class="d-flex align-items-center gap-3 mt-2 flex-wrap">
+        {% if os.data_agendamento %}
+          <span style="font-size:.8rem;color:#555">
+            📅 {{ os.data_agendamento.strftime('%d/%m/%Y às %H:%M') }}
+          </span>
+        {% else %}
+          <span style="font-size:.8rem;color:#f59e0b">⏳ Aguardando agendamento</span>
+        {% endif %}
+        {% if os.tecnico_nome %}
+          <span style="font-size:.8rem;color:#555">🔧 {{ os.tecnico_nome }}</span>
+        {% endif %}
+        {% if os.valor_confirmado %}
+          <span style="font-size:.82rem;font-weight:700;color:#16a34a">
+            💰 R$ {{ "%.2f"|format(os.valor_confirmado) }}
+          </span>
+        {% endif %}
+        <a href="/cliente/os/{{ os.id }}"
+           class="btn btn-sm btn-outline-primary ms-auto" style="font-size:.78rem">
+          Ver detalhes →
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="text-center text-muted py-5">
+    <div style="font-size:2.5rem">📭</div>
+    <p class="mt-2">Você ainda não fez nenhuma solicitação.</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+// Seleciona o tipo de solicitação e destaca o card escolhido
+function selecionarTipo(tipo){
+  document.getElementById('tipo_solicitacao').value = tipo;
+
+  // Reset visual dos dois cards
+  document.getElementById('card-orcamento').style.borderColor = '#d1d5db';
+  document.getElementById('card-orcamento').style.background  = '#fff';
+  document.getElementById('card-visita').style.borderColor    = '#d1d5db';
+  document.getElementById('card-visita').style.background     = '#fff';
+
+  // Destaca o card selecionado
+  if(tipo === 'orcamento_online'){
+    document.getElementById('card-orcamento').style.borderColor = '#2563eb';
+    document.getElementById('card-orcamento').style.background  = '#eff6ff';
+    document.getElementById('aviso-visita').classList.add('d-none');
+  } else {
+    document.getElementById('card-visita').style.borderColor = '#f59e0b';
+    document.getElementById('card-visita').style.background  = '#fffbeb';
+    document.getElementById('aviso-visita').classList.remove('d-none');
+  }
+}
+
+// Mapa de bairros por cidade
+const bairros = {
+  "Brasília - Asa Norte": ["SQN 101","SQN 102","SQN 103","SQN 104","SQN 105","SQN 106","SQN 107","SQN 108","SQN 109","SQN 110","SQN 111","SQN 112","SQN 113","SQN 114","SQN 115","SQN 201","SQN 202","SQN 203","SQN 204","SQN 205","SQN 206","SQN 207","SQN 208","SQN 209","SQN 210","SQN 211","SQN 212","SQN 213","SQN 214","SQN 215","SQN 301","SQN 302","SQN 303","SQN 304","SQN 305","SQN 306","SQN 307","SQN 308","SQN 309","SQN 310","SQN 311","SQN 312","SQN 313","SQN 314","SQN 315","CLN 100/200","CLN 300/400","703 Norte","707 Norte","708 Norte"],
+  "Brasília - Asa Sul": ["SQS 101","SQS 102","SQS 103","SQS 104","SQS 105","SQS 106","SQS 107","SQS 108","SQS 109","SQS 110","SQS 111","SQS 112","SQS 113","SQS 114","SQS 115","SQS 201","SQS 202","SQS 203","SQS 204","SQS 205","SQS 206","SQS 207","SQS 208","SQS 209","SQS 210","SQS 211","SQS 212","SQS 213","SQS 214","SQS 215","SQS 301","SQS 302","SQS 303","SQS 304","SQS 305","SQS 306","SQS 307","SQS 308","SQS 309","SQS 310","SQS 311","SQS 312","SQS 313","SQS 314","SQS 315","CLS 100/200","CLS 300/400","703 Sul","708 Sul"],
+  "Brasília - Lago Norte": ["QL 1","QL 2","QL 3","QL 4","QL 5","QL 6","QL 7","QL 8","QL 9","QL 10","QI 1","QI 2","QI 3","QI 4","QI 5","QI 6","QI 7","QI 8","QI 9","QI 10"],
+  "Brasília - Lago Sul": ["QI 1","QI 2","QI 3","QI 4","QI 5","QI 6","QI 7","QI 8","QI 9","QI 10","QI 11","QI 12","QI 13","QI 14","QI 15","QI 16","QI 17","QI 18","QI 19","QI 20","QL 1","QL 2","QL 3","QL 4","QL 5","QL 6","QL 7","QL 8","QL 9","QL 10"],
+  "Brasília - Noroeste": ["SQNW 100","SQNW 102","SQNW 104","SQNW 106","SQNW 108","SQNW 110","SQNW 112","SQNW 300","SQNW 302","SQNW 304","SQNW 306","SQNW 308","SQNW 310","CLNW 100/200","CLNW 300/400"],
+  "Brasília - Sudoeste": ["SQSW 100","SQSW 102","SQSW 104","SQSW 106","SQSW 108","SQSW 110","SQSW 112","SQSW 300","SQSW 302","SQSW 304","SQSW 306","SQSW 308","CLSW 100/200","CLSW 300/400"],
+  "Brasília - Octogonal": ["SQSO 1","SQSO 2","SQSO 3","SQSO 4","SQSO 5","SQSO 6","SQSO 7","SQSO 8"],
+  "Brasília - Cruzeiro": ["Cruzeiro Velho","Cruzeiro Novo"],
+  "Águas Claras": ["Águas Claras Norte","Águas Claras Sul","Arniqueiras","Areal","QS 1","QS 2","QS 3","QS 4","QS 5","QN 1","QN 2","QN 3","QN 4","QN 5"],
+  "Ceilândia": ["Ceilândia Centro","Ceilândia Norte","Ceilândia Sul","P Norte","P Sul","QNM","QNN","QNO","QNP","QNQ","QNR","Setor O","Guariroba","Sol Nascente","Pôr do Sol"],
+  "Gama": ["Setor Central","Setor Leste","Setor Norte","Setor Oeste","Setor Sul","Pedregal"],
+  "Guará": ["Guará I","Guará II","Setor Industrial","Park Sul"],
+  "Planaltina": ["Planaltina DF","Setor Tradicional","Vila Buritis","Arapoanga","Mestre D'Armas"],
+  "Recanto das Emas": ["QD 100","QD 200","QD 300","QD 400","QD 500","QD 600","QD 700","QD 800","QD 900"],
+  "Samambaia": ["Samambaia Norte","Samambaia Sul","QN","QS","QR","Setor Industrial"],
+  "Santa Maria": ["Santa Maria Centro","Setor Central","Setor Norte","Setor Sul","Setor Leste","Setor Oeste"],
+  "São Sebastião": ["São Sebastião Centro","Jardins Mangueiral","Dom Bosco","Setor Residencial Leste"],
+  "Sobradinho": ["Sobradinho I","Sobradinho II","Fercal"],
+  "Taguatinga": ["Taguatinga Centro","Taguatinga Norte","Taguatinga Sul","QNA","QNB","QNC","QND","QNE","QNF","QNG","QNH","QNJ","QNL","CNB","CNC","Setor B","Setor C","Setor D","Setor E"],
+  "Vicente Pires": ["Vicente Pires","Trecho 1","Trecho 2","Trecho 3"],
+  "Park Way": ["Park Way","SMPW"],
+  "Núcleo Bandeirante": ["Núcleo Bandeirante"],
+  "Riacho Fundo": ["Riacho Fundo I"],
+  "Riacho Fundo II": ["Riacho Fundo II"],
+  "Itapoã": ["Itapoã","Paranoá"],
+  "Valparaíso de Goiás": ["Céu Azul","Parque das Serras","Jardim Céu Azul","Vale do Sol","Parque Nações"],
+  "Novo Gama": ["Centro","Vila Pedroso","Jardim Ingá","Parque das Flores"],
+  "Luziânia": ["Centro","Jardim Ingá","São João","Parque Estrela"],
+  "Cidade Ocidental": ["Centro","Jardim ABC","Parque Lago"],
+  "Águas Lindas de Goiás": ["Centro","Mansões","Parque"],
+  "Formosa": ["Centro","Setor Norte","Setor Sul","Jardim"]
+};
+
+function atualizarBairros(){
+  const cidade = document.getElementById('sel-cidade').value;
+  const sel    = document.getElementById('sel-bairro');
+  const manual = document.getElementById('bairro-manual');
+  sel.innerHTML = '<option value="">Selecione o bairro...</option>';
+  manual.style.display = 'none';
+  manual.required = false;
+  if(!cidade || !bairros[cidade]) return;
+  bairros[cidade].forEach(b => {
+    const o = document.createElement('option');
+    o.value = b; o.textContent = b; sel.appendChild(o);
+  });
+  const outro = document.createElement('option');
+  outro.value = '__outro__'; outro.textContent = '📝 Outro (digitar)';
+  sel.appendChild(outro);
+  sel.onchange = function(){
+    if(this.value === '__outro__'){ manual.style.display='block'; manual.required=true; }
+    else { manual.style.display='none'; manual.required=false; }
+  };
+}
+
+document.querySelector('form').addEventListener('submit', function(e){
+  // Valida se tipo foi selecionado
+  if(!document.getElementById('tipo_solicitacao').value){
+    e.preventDefault();
+    alert('Selecione o tipo de solicitação: Orçamento Online ou Visita Técnica.');
+    return;
+  }
+  const sel = document.getElementById('sel-bairro');
+  const manual = document.getElementById('bairro-manual');
+  if(sel.value === '__outro__'){
+    if(!manual.value.trim()){ e.preventDefault(); manual.focus(); return; }
+    const o = new Option(manual.value, manual.value, true, true);
+    sel.appendChild(o); sel.value = manual.value;
+  }
+});
+</script>
+
+{% endblock %}

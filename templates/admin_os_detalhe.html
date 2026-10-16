@@ -1,0 +1,148 @@
+{% extends "base_admin.html" %}
+{% block title %}OS #{{ os.id }} — PrimeFix{% endblock %}
+{% block page_title %}<i class="bi bi-clipboard-check me-2"></i>Detalhes da OS #{{ os.id }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+
+  <!-- COLUNA PRINCIPAL — informações da OS -->
+  <div class="col-12 col-lg-8">
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-info-circle me-2 text-primary"></i>Informações da OS</h6>
+        <a href="/admin/dashboard" class="btn btn-sm btn-outline-secondary">← Voltar</a>
+      </div>
+      <div class="p-3">
+        <div class="row g-2" style="font-size:.88rem">
+
+          <!-- Status e tipo de serviço -->
+          <div class="col-6">
+            <strong>Status:</strong>
+            <span class="ms-2 status-badge bs-{{ os.status }}">
+              {{ os.status|replace('_',' ')|title }}
+            </span>
+          </div>
+          <div class="col-6"><strong>Serviço:</strong> {{ os.categoria_nome }}</div>
+
+          <!-- Dados do cliente -->
+          <div class="col-6"><strong>Cliente:</strong> {{ os.cliente_nome }}</div>
+          <div class="col-6"><strong>E-mail:</strong> {{ os.cliente_email }}</div>
+
+          <!-- Descrição do problema -->
+          <div class="col-12"><strong>Descrição:</strong> {{ os.descricao or '—' }}</div>
+
+          <!-- Endereço estruturado — campos salvos separadamente no banco -->
+          <div class="col-12 mt-2" style="border-top:1px solid #f0f0f0;padding-top:.8rem">
+            <strong>📍 Endereço:</strong><br>
+            {{ os.logradouro }}{% if os.numero %}, {{ os.numero }}{% endif %}
+            {% if os.complemento %} — {{ os.complemento }}{% endif %}<br>
+            {{ os.bairro }}{% if os.cidade %}, {{ os.cidade }}{% endif %}
+            {% if os.referencia %}<br><em>Ref: {{ os.referencia }}</em>{% endif %}
+          </div>
+
+          <!-- Agendamento e técnico — só aparecem se preenchidos -->
+          {% if os.data_agendamento %}
+          <div class="col-6 mt-1">
+            <strong>📅 Agendado:</strong> {{ os.data_agendamento.strftime('%d/%m/%Y às %H:%M') }}
+          </div>
+          {% endif %}
+
+          {% if os.tecnico_nome %}
+          <div class="col-6 mt-1">
+            <strong>🔧 Técnico:</strong> {{ os.tecnico_nome }}
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOCO DE VALOR — só aparece se o técnico já sugeriu um valor -->
+    {% if os.valor_sugerido %}
+    <div class="section-card">
+      <div class="sc-header">
+        <h6><i class="bi bi-cash-coin me-2 text-warning"></i>Valor do Serviço</h6>
+      </div>
+      <div class="p-3" style="font-size:.88rem">
+
+        <div class="mb-1">
+          <strong>Sugerido pelo técnico:</strong> R$ {{ "%.2f"|format(os.valor_sugerido) }}
+        </div>
+
+        <!-- Observação do técnico sobre o serviço -->
+        {% if os.observacao_tecnico %}
+        <div class="mb-2 text-muted"><em>{{ os.observacao_tecnico }}</em></div>
+        {% endif %}
+
+        <!-- Se já confirmado mostra divisão, senão mostra formulário de aprovação -->
+               {% if os.valor_confirmado %}
+          <div class="p-2 rounded" style="background:#f0fdf4">
+           <strong>✅ Confirmado: R$ {{ "%.2f"|format(os.valor_confirmado|float) }}</strong><br>
+
+<span style="color:#16a34a">
+  🏢 Empresa ({{ taxa_empresa|int }}%):
+  R$ {{ "%.2f"|format((os.valor_confirmado|float) * (taxa_empresa|float / 100)) }}
+</span> |
+
+<span style="color:#2563eb">
+  🔧 Técnico ({{ (100-taxa_empresa)|int }}%):
+  R$ {{ "%.2f"|format((os.valor_confirmado|float) * ((100-taxa_empresa|float) / 100)) }}
+</span>
+          </div>
+        {% else %}
+          <form action="/admin/confirmar-valor/{{ os.id }}" method="POST"
+                class="d-flex gap-2 align-items-center mt-2">
+            <input type="number" name="valor_confirmado" value="{{ os.valor_sugerido }}"
+                   class="form-control form-control-sm" style="width:150px" step="0.01" required>
+            <button type="submit" class="btn btn-sm btn-success">✓ Confirmar valor</button>
+          </form>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- COLUNA LATERAL — ações disponíveis -->
+  <div class="col-12 col-lg-4">
+
+    <!-- Atribuir técnico — só aparece se a OS ainda não tem técnico -->
+    {% if not os.tecnico_id %}
+    <div class="section-card mb-3">
+      <div class="sc-header">
+        <h6><i class="bi bi-person-check me-2 text-primary"></i>Atribuir Técnico</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/assign/{{ os.id }}" method="POST">
+          <select name="technician_id" class="form-select form-select-sm mb-2" required>
+            <option value="">Escolha um técnico...</option>
+            {% for tec in tecnicos %}
+            <option value="{{ tec.id }}">{{ tec.nome }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-sm btn-primary w-100">Atribuir</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Finalizar OS — só aparece se tem valor confirmado e não está finalizada -->
+    {% if os.valor_confirmado and os.status not in ['finalizada', 'cancelada'] %}
+    <div class="section-card">
+      <div class="sc-header">
+        <h6><i class="bi bi-check-circle me-2 text-success"></i>Finalizar OS</h6>
+      </div>
+      <div class="p-3">
+        <form action="/admin/finish/{{ os.id }}" method="POST"
+              onsubmit="return confirm('Finalizar OS #{{ os.id }}?')">
+          <button type="submit" class="btn btn-success w-100">
+            ✅ Marcar como Concluída
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

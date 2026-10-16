@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}PrimeFix — Serviços Técnicos Residenciais{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Sua casa em boas mãos 🏠</h1>
+  <p>Profissionais verificados para todos os serviços que sua casa precisa,<br>em Brasília e região.</p>
+  <div class="hero-actions">
+    <a href="/cadastro" class="btn-pf-primary">Solicitar serviço</a>
+    <a href="/login" class="btn-pf-secondary">Já tenho conta</a>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section class="como-section" id="como-funciona">
+  <h2>Como funciona</h2>
+  <div class="como-grid">
+    <div class="como-item">
+      <div class="como-numero">1</div>
+      <h3>Solicite online</h3>
+      <p>Crie sua conta, descreva o problema e receba um orçamento online gratuito.</p>
+    </div>
+    <div class="como-item">
+      <div class="como-numero">2</div>
+      <h3>Agendamos</h3>
+      <p>Decidiu pela visita? Agendamos o melhor dia e horário para você.</p>
+    </div>
+    <div class="como-item">
+      <div class="como-numero">3</div>
+      <h3>Avaliação</h3>
+      <p>O técnico visita, avalia e apresenta o valor final do serviço.</p>
+    </div>
+    <div class="como-item">
+      <div class="como-numero">4</div>
+      <h3>Resolvido!</h3>
+      <p>Aprovado o orçamento, o serviço é executado com qualidade e garantia.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AVISO VISITA TÉCNICA — 2 cartões lado a lado, pra deixar claro
+     que são 2 opções diferentes (uma grátis, outra paga), em vez de
+     um parágrafo só misturando as duas -->
+<section id="visita-tecnica" style="padding:2.5rem 1rem;background:#fff;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;">
+  <div style="max-width:960px;margin:0 auto;">
+
+    <h3 style="text-align:center;font-size:1.15rem;font-weight:800;color:#1e293b;margin-bottom:1.5rem">
+      Como você prefere solicitar o serviço?
+    </h3>
+
+    <!-- flex-wrap:wrap faz os cartões ficarem lado a lado em telas
+         largas e empilhados um embaixo do outro no celular -->
+    <div style="display:flex;flex-wrap:wrap;gap:1.2rem;justify-content:center;">
+
+      <!-- CARTÃO 1 — ORÇAMENTO ONLINE (GRÁTIS) -->
+      <div style="flex:1 1 320px;max-width:420px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:1.5rem;">
+        <span style="font-size:1.8rem">💬</span>
+        <span style="display:inline-block;background:#22c55e;color:#fff;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;margin-left:.5rem;vertical-align:middle">
+          GRÁTIS
+        </span>
+        <h4 style="font-size:1rem;font-weight:800;color:#14532d;margin:.7rem 0 .4rem">
+          Orçamento Online
+        </h4>
+        <p style="color:#166534;font-size:.88rem;margin:0">
+          Descreva o problema pelo site e receba um orçamento sem custo,
+          sem precisar de visita presencial.
+        </p>
+      </div>
+
+      <!-- CARTÃO 2 — VISITA TÉCNICA (PAGA) -->
+      <div style="flex:1 1 320px;max-width:420px;background:#fef9c3;border:1.5px solid #fde047;border-radius:12px;padding:1.5rem;">
+        <span style="font-size:1.8rem">🔧</span>
+        <span style="display:inline-block;background:#eab308;color:#fff;font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:999px;margin-left:.5rem;vertical-align:middle">
+          R$ 110,00
+        </span>
+        <h4 style="font-size:1rem;font-weight:800;color:#78350f;margin:.7rem 0 .4rem">
+          Visita Técnica
+        </h4>
+        <p style="color:#78350f;font-size:.88rem;margin:0">
+          Um técnico vai até o local avaliar presencialmente. O valor é
+          pago à plataforma no dia da visita e garante o deslocamento e o
+          tempo do profissional, mesmo que o serviço não seja fechado. O
+          repasse ao técnico é feito pela PrimeFix.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SERVIÇOS -->
+<section class="services-section" id="servicos">
+  <span class="section-tag">O que atendemos</span>
+  <h2>Todos os serviços que sua casa precisa</h2>
+  <p class="section-subtitle">Profissionais especializados em cada categoria, prontos para atender você.</p>
+  <div class="services-grid">
+    {% for cat in categorias %}
+    <div class="service-card">
+      <span class="service-icon">{{ cat.icone }}</span>
+      <h3>{{ cat.nome }}</h3>
+      <p>{{ cat.descricao }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- POR QUE A PRIMEFIX -->
+<section class="porq-section">
+  <h2>Por que escolher a PrimeFix?</h2>
+  <div class="porq-grid">
+    <div class="porq-item">
+      <span class="porq-icon">✅</span>
+      <h3>Profissionais verificados</h3>
+      <p>Todos os técnicos passam por verificação de antecedentes e avaliação técnica.</p>
+    </div>
+    <div class="porq-item">
+      <span class="porq-icon">💰</span>
+      <h3>Orçamento sem surpresa</h3>
+      <p>O valor é apresentado antes de qualquer serviço ser executado.</p>
+    </div>
+    <div class="porq-item">
+      <span class="porq-icon">📍</span>
+      <h3>Atendemos sua região</h3>
+      <p>Cobrimos Brasília, Taguatinga, Ceilândia, Gama e todo o entorno do DF.</p>
+    </div>
+    <div class="porq-item">
+      <span class="porq-icon">📱</span>
+      <h3>Acompanhe pelo sistema</h3>
+      <p>Veja o status da sua OS em tempo real pelo site, a qualquer hora.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DEPOIMENTOS -->
+<section class="dep-section" id="depoimentos">
+  <h2>O que nossos clientes dizem</h2>
+  <div class="dep-grid">
+    <div class="dep-card">
+      <div class="dep-estrelas">★★★★★</div>
+      <p class="dep-texto">"Técnico chegou no horário marcado, resolveu o problema elétrico rapidinho e deixou tudo limpo. Super recomendo!"</p>
+      <div class="dep-autor">
+        <div class="dep-avatar">M</div>
+        <div>
+          <div class="dep-nome">Maria S.</div>
+          <div class="dep-bairro">Asa Sul, Brasília</div>
+        </div>
+      </div>
+    </div>
+    <div class="dep-card">
+      <div class="dep-estrelas">★★★★★</div>
+      <p class="dep-texto">"Meu ar condicionado estava com defeito há semanas. A PrimeFix mandou um técnico no dia seguinte. Excelente!"</p>
+      <div class="dep-autor">
+        <div class="dep-avatar">J</div>
+        <div>
+          <div class="dep-nome">João P.</div>
+          <div class="dep-bairro">Taguatinga Norte</div>
+        </div>
+      </div>
+    </div>
+    <div class="dep-card">
+      <div class="dep-estrelas">★★★★★</div>
+      <p class="dep-texto">"Atendimento rápido, preço justo e profissional muito educado. Com certeza vou usar novamente!"</p>
+      <div class="dep-autor">
+        <div class="dep-avatar">A</div>
+        <div>
+          <div class="dep-nome">Ana R.</div>
+          <div class="dep-bairro">Águas Claras</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <h2>Pronto para resolver?</h2>
+  <p>Crie sua conta grátis e solicite seu orçamento online agora.</p>
+  <a href="/cadastro" class="btn-pf-primary" style="background:#fff;color:#2563eb">
+    Criar conta grátis
+  </a>
+</section>
+
+{% endblock %}

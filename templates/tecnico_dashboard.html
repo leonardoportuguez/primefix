@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+{% block title %}Minha Agenda — PrimeFix{% endblock %}
+
+{% block content %}
+
+<!-- CABEÇALHO DE BOAS VINDAS -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Olá, {{ session.nome.split()[0] }} 👋</h4>
+    <p class="text-muted mb-0" style="font-size:.9rem">Sua agenda e ordens de serviço</p>
+  </div>
+
+ <!-- FOTO DE PERFIL + UPLOAD -->
+<div class="text-center">
+  {% if tecnico_foto %}
+    <a href="{{ url_for('static', filename=tecnico_foto) }}"
+       target="_blank"
+       title="Clique para ampliar a foto">
+      <img src="{{ url_for('static', filename=tecnico_foto) }}"
+           alt="Foto de perfil"
+           class="rounded-circle shadow-sm"
+           style="width:110px; height:110px; object-fit:cover; cursor:pointer;">
+    </a>
+  {% else %}
+    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center shadow-sm"
+         style="width:110px; height:110px; margin:0 auto;">
+      <span style="font-size:2.5rem">👤</span>
+    </div>
+  {% endif %}
+
+  <form action="{{ url_for('technician.upload_foto') }}"
+        method="POST"
+        enctype="multipart/form-data"
+        class="mt-2">
+
+    <label class="form-label small mb-1">
+      Alterar foto
+    </label>
+
+    <input type="file"
+           name="foto"
+           accept="image/png, image/jpeg"
+           required
+           class="form-control form-control-sm">
+
+    <button type="submit" class="btn btn-sm btn-outline-primary mt-2">
+      Enviar foto
+    </button>
+   </form>
+</div>
+
+</div> <!-- fecha o cabeçalho -->
+
+<!-- OS QUE REQUEREM AÇÃO — atribuídas ou em andamento -->
+<!-- Só aparecem OS que o admin já atribuiu ao técnico logado -->
+{% set ativas = ordens|selectattr('status','in',['atribuida','em_andamento'])|list %}
+{% if ativas %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white fw-bold" style="font-size:.95rem">
+    ⚡ Requerem ação ({{ ativas|length }})
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 table-pf">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Serviço</th>
+          <th>Endereço</th>
+          <th>Agendamento</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for os in ativas %}
+        <tr>
+          <td class="fw-bold text-primary">#{{ os.id }}</td>
+          <td>{{ os.cliente_nome }}</td>
+          <td>{{ os.categoria_nome }}</td>
+          <td style="font-size:.82rem">
+            {% if os.bairro %}
+              📍 {{ os.bairro }}{% if os.cidade %}, {{ os.cidade }}{% endif %}
+            {% endif %}
+            {% if os.logradouro %}
+              <br>{{ os.logradouro }}{% if os.numero %}, {{ os.numero }}{% endif %}
+            {% endif %}
+          </td>
+          <td style="font-size:.82rem">
+            {% if os.data_agendamento %}
+              📅 {{ os.data_agendamento.strftime('%d/%m/%Y às %H:%M') }}
+            {% else %}
+              <!-- Admin ainda não agendou a visita -->
+              <span class="badge bg-warning text-dark">Aguardando agendamento</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge-{{ os.status }}">
+              {{ os.status|replace('_',' ')|title }}
+            </span>
+          </td>
+         <td>
+<a href="{{ url_for('technician.ver_os', os_id=os.id) }}"
+   class="btn btn-sm btn-outline-secondary mb-2">
+    👁️ Ver detalhes
+</a>
+  {% if os.status == 'atribuida' %}
+
+    <div class="d-flex flex-column gap-2">
+
+      {% if not os.valor_sugerido %}
+        <button class="btn btn-sm btn-outline-primary"
+                onclick="abrirModalValor({{ os.id }})">
+          💰 Informar valor
+        </button>
+      {% else %}
+        <span class="badge bg-warning text-dark">
+          Valor enviado — aguardando aprovação
+        </span>
+      {% endif %}
+
+      <form method="POST"
+            action="{{ url_for('technician.atualizar_status', os_id=os.id) }}">
+
+        <input type="hidden" name="status" value="em_andamento">
+
+        <button type="submit"
+                class="btn btn-sm btn-success">
+          ▶️ Iniciar serviço
+        </button>
+
+      </form>
+
+    </div>
+
+  {% elif os.status == 'em_andamento' %}
+
+    <div class="d-flex flex-column gap-2">
+
+      <span class="badge bg-primary">
+        🔵 Serviço em andamento
+      </span>
+
+      <form method="POST"
+            action="{{ url_for('technician.atualizar_status', os_id=os.id) }}">
+
+        <input type="hidden" name="status" value="finalizada">
+
+        <button type="submit"
+                class="btn btn-sm btn-success">
+          ✅ Finalizar serviço
+        </button>
+
+      </form>
+
+    </div>
+
+  {% endif %}
+
+</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- RESUMO FINANCEIRO -->
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <small class="text-muted">Total dos serviços finalizados</small>
+        <h4 class="fw-bold mt-1">
+          R$ {{ "%.2f"|format(total_bruto) }}
+        </h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <small class="text-muted">Taxa PrimeFix ({{ taxa_empresa|int }}%)</small>
+        <h4 class="fw-bold mt-1 text-danger">
+          R$ {{ "%.2f"|format(total_taxa) }}
+        </h4>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <small class="text-muted">Seu total a receber</small>
+        <h4 class="fw-bold mt-1 text-success">
+          R$ {{ "%.2f"|format(total_repasse) }}
+        </h4>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================
+     SERVIÇOS EM ANDAMENTO
+     Mostra o valor aprovado atualmente, mas deixa claro que
+     o valor pode mudar caso sejam encontrados serviços adicionais.
+     ============================================================ -->
+
+{% set em_andamento = ordens|selectattr('status', 'equalto', 'em_andamento')|list %}
+
+{% if em_andamento %}
+<div class="card border-0 shadow-sm mb-4">
+
+  <div class="card-header bg-warning-subtle fw-bold">
+    🔧 Serviços em andamento
+  </div>
+
+  <div class="card-body">
+
+    <div class="alert alert-warning small mb-3">
+      <strong>⚠️ Atenção:</strong>
+      os valores abaixo são os valores atualmente aprovados.
+      Eles podem sofrer alteração caso sejam identificados
+      serviços adicionais durante a execução.
+    </div>
+
+    <div class="row g-3">
+
+      {% for os in em_andamento %}
+
+      <div class="col-md-6 col-lg-4">
+
+        <div class="card h-100 border-warning shadow-sm">
+
+          <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-start mb-2">
+
+              <span class="fw-bold text-primary">
+                OS #{{ os.id }}
+              </span>
+
+              <span class="badge bg-warning text-dark">
+                Em andamento
+              </span>
+
+            </div>
+
+            <h6 class="fw-bold mb-2">
+              {{ os.categoria_nome }}
+            </h6>
+
+            <p class="text-muted small mb-2">
+              Cliente: {{ os.cliente_nome }}
+            </p>
+
+            {% if os.valor_confirmado %}
+
+            <div class="bg-light rounded p-2 mb-2">
+
+              <small class="text-muted">
+                Valor atual do serviço
+              </small>
+
+              <div class="fw-bold text-primary">
+                R$ {{ "%.2f"|format(os.valor_confirmado|float) }}
+              </div>
+
+            </div>
+
+            {% endif %}
+
+            {% if os.observacao_tecnico %}
+
+            <div class="small text-muted">
+              <strong>Observação:</strong><br>
+              {{ os.observacao_tecnico }}
+            </div>
+
+            {% endif %}
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+  </div>
+
+</div>
+{% endif %}
+
+
+<!-- HISTÓRICO COMPLETO DE OS -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white fw-bold" style="font-size:.95rem">
+    📋 Histórico de OS
+  </div>
+  {% if ordens %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 table-pf">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Serviço</th>
+          <th>Agendamento</th>
+          <th>Valor</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for os in ordens %}
+        <tr>
+          <td class="fw-bold text-primary">#{{ os.id }}</td>
+          <td>{{ os.cliente_nome }}</td>
+          <td>{{ os.categoria_nome }}</td>
+          <td style="font-size:.82rem">
+            {% if os.data_agendamento %}
+              {{ os.data_agendamento.strftime('%d/%m/%Y %H:%M') }}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if os.valor_confirmado %}
+              <!-- Valor aprovado pelo admin — mostra o repasse do técnico (77%) -->
+              <strong class="text-success">
+                R$ {{ "%.2f"|format(os.valor_confirmado) }}
+              </strong>
+            <br>
+<small class="text-muted">
+  Seu repasse ({{ (100-taxa_empresa)|int }}%):
+  R$ {{ "%.2f"|format(os.valor_confirmado|float * (1-taxa_empresa/100)) }}
+</small>
+            {% elif os.valor_sugerido %}
+              <span class="badge bg-warning text-dark" style="font-size:.72rem">
+                Pendente aprovação
+              </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <span class="badge-{{ os.status }}">
+              {{ os.status|replace('_',' ')|title }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center text-muted py-4">
+    <div style="font-size:2.5rem">📭</div>
+    <p class="mt-2">Nenhuma OS atribuída ainda.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- MODAL INFORMAR VALOR APÓS VISITA
+     Técnico preenche o valor que o serviço vai custar
+     Admin recebe a sugestão e decide se aprova ou ajusta -->
+<div class="modal fade" id="modalValor" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title fw-bold">💰 Informar Valor Após Visita</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formValor" method="POST">
+        <div class="modal-body">
+          <label class="form-label fw-semibold" style="font-size:.85rem">
+            Valor sugerido (R$)
+          </label>
+          <input type="number" name="valor_sugerido"
+                 class="form-control mb-2" step="0.01" min="0" required>
+          <label class="form-label fw-semibold" style="font-size:.85rem">
+            Observação (opcional)
+          </label>
+          <textarea name="observacao" class="form-control" rows="2"
+                    placeholder="Descreva o serviço encontrado..."></textarea>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-sm btn-light"
+                  data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">
+            Enviar para aprovação
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Define a rota correta no form antes de abrir o modal
+function abrirModalValor(osId){
+  document.getElementById('formValor').action = `/tecnico/sugerir-valor/${osId}`;
+  new bootstrap.Modal(document.getElementById('modalValor')).show();
+}
+</script>
+
+{% endblock %}

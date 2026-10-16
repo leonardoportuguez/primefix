@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}OS #{{ os.id }} — PrimeFix{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">
+            Ordem de Serviço #{{ os.id }}
+        </h4>
+
+        <p class="text-muted mb-0">
+            Detalhes do atendimento
+        </p>
+    </div>
+
+    <a href="{{ url_for('technician.dashboard') }}"
+       class="btn btn-outline-secondary btn-sm">
+        ← Voltar
+    </a>
+</div>
+
+
+<!-- ============================================================
+     STATUS DA OS
+     ============================================================ -->
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+                <small class="text-muted d-block">
+                    Status atual
+                </small>
+
+                <span class="badge-{{ os.status }}">
+                    {{ os.status|replace('_', ' ')|title }}
+                </span>
+            </div>
+
+            <div class="text-end">
+
+                {% if os.data_agendamento %}
+
+                    <small class="text-muted d-block">
+                        Visita agendada
+                    </small>
+
+                    <strong>
+                        📅 {{ os.data_agendamento.strftime('%d/%m/%Y às %H:%M') }}
+                    </strong>
+
+                {% else %}
+
+                    <span class="badge bg-warning text-dark">
+                        Aguardando agendamento
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ============================================================
+     DADOS DO CLIENTE E SERVIÇO
+     ============================================================ -->
+
+<div class="row g-4">
+
+    <!-- SERVIÇO -->
+    <div class="col-lg-7">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-header bg-white fw-bold">
+                🔧 Serviço solicitado
+            </div>
+
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">
+                        Categoria
+                    </small>
+
+                    <strong>
+                        {{ os.categoria_nome or 'Não informado' }}
+                    </strong>
+                </div>
+
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">
+                        Cliente
+                    </small>
+
+                    <strong>
+                        {{ os.cliente_nome or 'Não informado' }}
+                    </strong>
+                </div>
+
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">
+                        Descrição do problema
+                    </small>
+
+                    <div class="bg-light rounded p-3">
+                        {{ os.descricao or 'Nenhuma descrição informada.' }}
+                    </div>
+                </div>
+
+
+                <div>
+                    <small class="text-muted d-block mb-1">
+                        Endereço
+                    </small>
+
+                    <div>
+
+                        {% if os.logradouro %}
+                            {{ os.logradouro }}
+
+                            {% if os.numero %}
+                                , {{ os.numero }}
+                            {% endif %}
+
+                            {% if os.complemento %}
+                                — {{ os.complemento }}
+                            {% endif %}
+
+                            <br>
+                        {% endif %}
+
+                        {% if os.bairro %}
+                            {{ os.bairro }}
+                        {% endif %}
+
+                        {% if os.cidade %}
+                            — {{ os.cidade }}
+                        {% endif %}
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- VALORES -->
+    <div class="col-lg-5">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-header bg-white fw-bold">
+                💰 Valores
+            </div>
+
+            <div class="card-body">
+
+                {% if os.valor_confirmado %}
+
+                    <small class="text-muted d-block">
+                        Valor aprovado pelo administrador
+                    </small>
+
+                    <h3 class="fw-bold text-success mb-3">
+                        R$ {{ "%.2f"|format(os.valor_confirmado|float) }}
+                    </h3>
+
+                {% elif os.valor_sugerido %}
+
+                    <small class="text-muted d-block">
+                        Valor sugerido por você
+                    </small>
+
+                    <h3 class="fw-bold text-warning mb-3">
+                        R$ {{ "%.2f"|format(os.valor_sugerido|float) }}
+                    </h3>
+
+                    <div class="alert alert-warning small">
+                        ⏳ Aguardando aprovação do administrador.
+                    </div>
+
+                {% else %}
+
+                    <div class="text-muted">
+                        Nenhum valor informado ainda.
+                    </div>
+
+                {% endif %}
+
+
+                {% if os.observacao_tecnico %}
+
+                    <hr>
+
+                    <small class="text-muted d-block mb-1">
+                        Sua observação
+                    </small>
+
+                    <div class="bg-light rounded p-3 small">
+                        {{ os.observacao_tecnico }}
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     INFORMAR / ATUALIZAR VALOR
+     ============================================================ -->
+
+{% if os.status == 'atribuida' %}
+
+<div class="card border-0 shadow-sm mt-4">
+
+    <div class="card-header bg-white fw-bold">
+        💰 Informar valor do serviço
+    </div>
+
+    <div class="card-body">
+
+        <p class="text-muted small">
+            Informe o valor estimado após analisar a situação
+            encontrada no atendimento. O valor será enviado para
+            aprovação do administrador.
+        </p>
+
+        <form method="POST"
+              action="{{ url_for('technician.sugerir_valor', os_id=os.id) }}">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+
+                    <label class="form-label fw-semibold">
+                        Valor sugerido (R$)
+                    </label>
+
+                    <input type="number"
+                           name="valor_sugerido"
+                           class="form-control"
+                           step="0.01"
+                           min="0.01"
+                           value="{{ os.valor_sugerido or '' }}"
+                           required>
+
+                </div>
+
+
+                <div class="col-md-8">
+
+                    <label class="form-label fw-semibold">
+                        Observação
+                    </label>
+
+                    <textarea name="observacao"
+                              class="form-control"
+                              rows="2"
+                              placeholder="Descreva o serviço encontrado...">{{ os.observacao_tecnico or '' }}</textarea>
+
+                </div>
+
+            </div>
+
+
+            <button type="submit"
+                    class="btn btn-primary mt-3">
+
+                💰 Enviar para aprovação
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- ============================================================
+     AÇÕES DO TÉCNICO
+     ============================================================ -->
+
+<div class="card border-0 shadow-sm mt-4">
+
+    <div class="card-header bg-white fw-bold">
+        ⚙️ Ações
+    </div>
+
+    <div class="card-body">
+
+        {% if os.status == 'atribuida' %}
+
+            <form method="POST"
+                  action="{{ url_for('technician.atualizar_status', os_id=os.id) }}">
+
+                <input type="hidden"
+                       name="status"
+                       value="em_andamento">
+
+                <button type="submit"
+                        class="btn btn-success">
+
+                    ▶️ Iniciar serviço
+
+                </button>
+
+            </form>
+
+
+        {% elif os.status == 'em_andamento' %}
+
+            <div class="alert alert-primary small">
+                🔵 Este serviço está em andamento.
+            </div>
+
+            <form method="POST"
+                  action="{{ url_for('technician.atualizar_status', os_id=os.id) }}">
+
+                <input type="hidden"
+                       name="status"
+                       value="finalizada">
+
+                <button type="submit"
+                        class="btn btn-success">
+
+                    ✅ Finalizar serviço
+
+                </button>
+
+            </form>
+
+
+        {% elif os.status == 'finalizada' %}
+
+            <div class="alert alert-success mb-0">
+                ✅ Este serviço foi finalizado.
+            </div>
+
+
+        {% else %}
+
+            <div class="text-muted">
+                Nenhuma ação disponível para esta OS.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     VOLTAR
+     ============================================================ -->
+
+<div class="mt-4 mb-5">
+
+    <a href="{{ url_for('technician.dashboard') }}"
+       class="btn btn-secondary">
+
+        ← Voltar para minha agenda
+
+    </a>
+
+</div>
+
+{% endblock %}

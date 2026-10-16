@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Meu Perfil — PrimeFix{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     TÍTULO DA PÁGINA
+     ============================================================ -->
+<div class="d-flex align-items-center gap-3 mb-4">
+  {% if tecnico.foto_perfil %}
+    <a href="{{ url_for('static', filename=tecnico.foto_perfil) }}"
+       target="_blank"
+       title="Clique para ampliar">
+      <img src="{{ url_for('static', filename=tecnico.foto_perfil) }}"
+           alt="Foto de perfil"
+           class="rounded-circle shadow-sm"
+           style="width:120px; height:120px; object-fit:cover; cursor:pointer;">
+    </a>
+  {% else %}
+    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center shadow-sm"
+         style="width:120px; height:120px;">
+      <span style="font-size:2.8rem">👤</span>
+    </div>
+  {% endif %}
+
+  <div>
+    <h4 class="fw-bold mb-1">Meu Perfil</h4>
+    <p class="text-muted mb-0">Clique na foto para visualizar em tamanho maior.</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     CARD — caixa visual do Bootstrap (sombra + cantos arredondados),
+     só serve pra separar o formulário do resto da página
+     ============================================================ -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+
+    <!-- ============================================================
+         FORMULÁRIO DE PERFIL
+         Envia via POST pra rota atualizar_perfil (ainda vamos criar).
+         Não precisa de enctype multipart, pois não há upload de arquivo
+         aqui — a foto já é tratada separadamente na rota upload_foto.
+         ============================================================ -->
+    <form method="POST" action="{{ url_for('technician.atualizar_perfil') }}">
+
+      <!-- ============================================================
+           GRADE DE CAMPOS
+           "row g-3" é o sistema de colunas do Bootstrap, só organiza
+           os campos lado a lado com espaçamento entre eles
+           ============================================================ -->
+      <div class="row g-3">
+
+        <!-- CPF
+             name="cpf" é o nome que a rota Flask recebe via request.form.get('cpf')
+             value="{{ tecnico.cpf or '' }}" pré-preenche com o dado salvo no banco,
+             ou deixa vazio se o técnico ainda não cadastrou -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">CPF</label>
+          <input type="text" name="cpf" class="form-control"
+                 value="{{ tecnico.cpf or '' }}" placeholder="000.000.000-00">
+        </div>
+
+        <!-- DATA DE NASCIMENTO
+             type="date" abre o calendário nativo do navegador -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Data de nascimento</label>
+          <input type="date" name="data_nascimento" class="form-control"
+                 value="{{ tecnico.data_nascimento or '' }}">
+        </div>
+
+        <!-- CHAVE PIX
+             usada futuramente pro repasse financeiro (77%) ao técnico -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Chave PIX</label>
+          <input type="text" name="chave_pix" class="form-control"
+                 value="{{ tecnico.chave_pix or '' }}" placeholder="CPF, e-mail, telefone ou chave aleatória">
+        </div>
+
+        <!-- CIDADE -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Cidade</label>
+          <input type="text" name="cidade" class="form-control"
+                 value="{{ tecnico.cidade or '' }}">
+        </div>
+
+        <!-- BAIRRO -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Bairro</label>
+          <input type="text" name="bairro" class="form-control"
+                 value="{{ tecnico.bairro or '' }}">
+        </div>
+
+        <!-- ENDEREÇO -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Endereço</label>
+          <input type="text" name="endereco" class="form-control"
+                 value="{{ tecnico.endereco or '' }}" placeholder="Rua, número, complemento">
+        </div>
+
+      </div>
+      <!-- fim da grade de campos -->
+
+      <!-- BOTÃO DE ENVIO
+           dispara o POST com todos os campos preenchidos -->
+      <button type="submit" class="btn btn-primary mt-4">Salvar alterações</button>
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}

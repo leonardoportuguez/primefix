@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Especialidades{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-4">🛠️ Minhas Especialidades</h2>
+
+  <!-- ============================================================
+       Lista das especialidades que o técnico já atende
+       ============================================================ -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <strong>Categorias que você atende</strong>
+    </div>
+    <div class="card-body">
+      {% if minhas_categorias %}
+        <ul class="list-group">
+          {% for cat in minhas_categorias %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ cat.nome }}
+            <form method="POST" action="{{ url_for('technician.remover_especialidade', vinculo_id=cat.vinculo_id) }}"
+                  onsubmit="return confirm('Remover esta especialidade?');" class="m-0">
+              <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">Você ainda não cadastrou nenhuma especialidade.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Formulário para adicionar uma nova especialidade
+       ============================================================ -->
+  <div class="card">
+    <div class="card-header">
+      <strong>Adicionar nova especialidade</strong>
+    </div>
+    <div class="card-body">
+      {% if categorias_disponiveis %}
+        <form method="POST" action="{{ url_for('technician.adicionar_especialidade') }}" class="d-flex gap-2">
+          <select name="category_id" class="form-select" required>
+            <option value="" disabled selected>Selecione uma categoria...</option>
+            {% for cat in categorias_disponiveis %}
+            <option value="{{ cat.id }}">{{ cat.nome }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-primary text-nowrap">Adicionar</button>
+        </form>
+      {% else %}
+        <p class="text-muted mb-0">Você já atende todas as categorias disponíveis.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base_admin.html" %}
+{% block title %}Clientes — PrimeFix Admin{% endblock %}
+{% block page_title %}<i class="bi bi-people me-2"></i>Clientes{% endblock %}
+
+{% block content %}
+
+<!-- Cabeçalho da página -->
+<div class="page-header">
+  <div>
+    <h2>Clientes</h2>
+    <p>Todos os clientes cadastrados na plataforma</p>
+  </div>
+</div>
+
+<!-- Card principal — mesmo padrão visual usado em Categorias/Técnicos -->
+<div class="section-card">
+
+  <!-- Cabeçalho do card -->
+  <div class="sc-header">
+    <h6><i class="bi bi-people me-2 text-primary"></i>Clientes Cadastrados</h6>
+  </div>
+
+  <!-- Tabela responsiva -->
+  <div class="table-responsive">
+    <table class="table table-hover table-admin mb-0">
+
+           <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Telefone</th>
+          <th>Cadastrado em</th>
+          <th>Total de OS</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- Percorre a lista "clientes" enviada pela rota admin.clientes() -->
+        {% for cli in clientes %}
+        <tr>
+          <td>{{ cli.nome }}</td>
+          <td>{{ cli.email }}</td>
+          <td>{{ cli.telefone or "—" }}</td>
+          <!-- strftime formata a data no padrão brasileiro dd/mm/aaaa -->
+          <td>{{ cli.created_at.strftime('%d/%m/%Y') }}</td>
+                                   <td>
+            <span class="d-inline-flex align-items-center gap-1"
+                  style="font-size:.75rem;color:#2563eb;background:var(--azul-claro);
+                         padding:2px 10px;border-radius:20px;font-weight:700">
+              <i class="bi bi-clipboard-list" style="font-size:.7rem"></i>{{ cli.total_os }}
+            </span>
+          </td>
+          <td>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    data-bs-toggle="modal" data-bs-target="#excluirCli{{ cli.id }}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <!-- Modal de confirmação — pede motivo antes de excluir -->
+        <div class="modal fade" id="excluirCli{{ cli.id }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form action="{{ url_for('admin.cliente_excluir', client_id=cli.id) }}" method="POST">
+                <div class="modal-header">
+                  <h6 class="modal-title">Excluir Cliente</h6>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Excluir <strong>{{ cli.nome }}</strong>? As OS antigas dele
+                     permanecem no histórico, sem vínculo com nenhum cliente.</p>
+                  <label class="form-label">Motivo (opcional)</label>
+                  <input type="text" name="motivo" class="form-control">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <!-- Só aparece se a lista "clientes" vier vazia -->
+        <tr>
+                                    <td colspan="6">
+            <div class="empty-state">
+              <i class="bi bi-people"></i>
+              <p>Nenhum cliente cadastrado.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+  </div>
+</div>
+
+{% endblock %}
